@@ -1,8 +1,8 @@
 import { createLibp2p } from 'libp2p';
 import { tcp } from '@libp2p/tcp';
 import { noise } from '@chainsafe/libp2p-noise';
-import { yamux } from '@chainsafe/libp2p-yamux'
-import { generateKeyPair } from '@libp2p/crypto/keys'
+import { yamux } from '@chainsafe/libp2p-yamux';
+import { generateKeyPair } from '@libp2p/crypto/keys';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';

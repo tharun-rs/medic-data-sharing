@@ -7,6 +7,7 @@ import { bootstrap } from '@libp2p/bootstrap';
 import { kadDHT } from '@libp2p/kad-dht';
 import { jsonToStream, streamToJSON } from './streams.js';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const protocol = '/json-exchange/1.0.0';
