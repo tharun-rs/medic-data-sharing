@@ -4,12 +4,29 @@ import { noise } from '@chainsafe/libp2p-noise';
 import { yamux } from '@chainsafe/libp2p-yamux';
 import { multiaddr } from '@multiformats/multiaddr';
 import { bootstrap } from '@libp2p/bootstrap';
+import { kadDHT } from '@libp2p/kad-dht';
 import { jsonToStream, streamToJSON } from './streams.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const protocol = '/json-exchange/1.0.0';
+// Get the current file's directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const bootstrapUrlPath = path.join(__dirname,'/BOOTSTRAP_URL.txt');
 
 // Create a node
 export const createNode = async () => {
+    let bootstrapList = [];
+
+    // Read bootstrap URLs from the file, if it exists
+    if (fs.existsSync(bootstrapUrlPath)) {
+        const fileContent = fs.readFileSync(bootstrapUrlPath, 'utf8');
+        bootstrapList = fileContent.split('\n').filter((line) => line.trim() !== '');
+    } else {
+        console.warn('Bootstrap file not found. Using default configuration.');
+    }
+
     const node = await createLibp2p({
         addresses: { listen: ['/ip4/0.0.0.0/tcp/0'] },
         transports: [tcp()],
@@ -17,12 +34,16 @@ export const createNode = async () => {
         streamMuxers: [yamux()],
         peerDiscovery: [
             bootstrap({
-                list: [
-                    '/ip4/127.0.0.1/tcp/4001/p2p/12D3KooWASdC5RaPsiHSndq6KtrhYZ4wx4n48nVC3q4pRFwrNyc4'
-                ],
+                list: bootstrapList,
                 interval: 20000,
             }),
-        ]
+        ],
+        dht: kadDHT({
+            enabled: true, // Enable the DHT
+            randomWalk: {
+                enabled: true, // Allow random-walk to find more peers
+            },
+        }),
     });
 
     await node.start(); // Start the node

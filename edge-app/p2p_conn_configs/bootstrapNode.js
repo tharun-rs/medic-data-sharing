@@ -3,12 +3,16 @@ import { tcp } from '@libp2p/tcp';
 import { noise } from '@chainsafe/libp2p-noise';
 import { yamux } from '@chainsafe/libp2p-yamux'
 import { generateKeyPair } from '@libp2p/crypto/keys'
-import { keys } from '@libp2p/crypto'
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const bootstrapUrlPath = path.join(__dirname,'/BOOTSTRAP_URL.txt');
+const keyPath = path.join(__dirname,'BOOTSTRAP_KEYS.json');
 
-const keyPath = 'BOOTSTRAP_KEYS.json';
 
 const loadOrGenerateKey = async () => {
     let privateKeyData;
@@ -51,17 +55,15 @@ const createBootstrapNode = async () => {
     node.getMultiaddrs().forEach((addr) => {
         console.log(addr.toString());
     });
-    console.log('_________________________________________________________');
-
+    
+    //write bootstrap url to file
+    if (!fs.existsSync(bootstrapUrlPath)) {
+        const multiaddrs = node.getMultiaddrs().map(addr => addr.toString()).join('\n');
+        fs.writeFileSync(bootstrapUrlPath, multiaddrs);
+    }
     return node;
 };
 
-// // Start 3 bootstrap nodes on unique ports
-// Promise.all(
-//     ports.map((port, idx) => createBootstrapNode(idx, port))
-// ).catch((err) => {
-//     console.error('Error starting bootstrap nodes:', err);
-// });?
 createBootstrapNode().catch((err) => {
     console.error("Error starting node: ", err);
 })

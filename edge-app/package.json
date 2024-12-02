@@ -4,7 +4,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "nodemon index.js"
+    "bootstrap": "node p2p_conn_configs/bootstrapNode.js"
   },
   "author": "Tharun R S",
   "license": "ISC",
