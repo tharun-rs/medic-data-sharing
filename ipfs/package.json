@@ -2,10 +2,23 @@
   "name": "ipfs",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Tharun R S",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "@chainsafe/libp2p-noise": "^16.0.0",
+    "@chainsafe/libp2p-yamux": "^7.0.1",
+    "@helia/unixfs": "^4.0.1",
+    "@libp2p/bootstrap": "^11.0.13",
+    "@libp2p/identify": "^3.0.12",
+    "@libp2p/tcp": "^10.0.13",
+    "blockstore-core": "^5.0.2",
+    "datastore-core": "^10.0.2",
+    "helia": "^5.1.1",
+    "libp2p": "^2.3.1"
+  }
 }
