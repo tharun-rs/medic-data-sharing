@@ -18,6 +18,7 @@
     "@libp2p/tcp": "^10.0.13",
     "blockstore-fs": "^2.0.2",
     "datastore-fs": "^10.0.2",
+    "express": "^4.21.2",
     "helia": "^5.1.1",
     "libp2p": "^2.3.1"
   }
