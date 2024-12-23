@@ -4,10 +4,11 @@ import { unixfs } from '@helia/unixfs';
 import { bootstrap } from '@libp2p/bootstrap';
 import { identify } from '@libp2p/identify';
 import { tcp } from '@libp2p/tcp';
-import { MemoryBlockstore } from 'blockstore-core';
-import { MemoryDatastore } from 'datastore-core';
+import { FsDatastore } from 'datastore-fs';
+import { FsBlockstore } from 'blockstore-fs';
 import { createHelia } from 'helia';
 import { createLibp2p } from 'libp2p';
+import fs from 'fs';
 
 class IPFSNode {
   constructor() {
@@ -20,10 +21,10 @@ class IPFSNode {
    */
   async initialize() {
     // The blockstore is where we store the blocks that make up files
-    const blockstore = new MemoryBlockstore();
+    const blockstore = new FsBlockstore('./blockstore');
 
     // Application-specific data lives in the datastore
-    const datastore = new MemoryDatastore();
+    const datastore = new FsDatastore('./datastore');
 
     // libp2p is the networking layer that underpins Helia
     const libp2p = await createLibp2p({
@@ -62,13 +63,12 @@ class IPFSNode {
    * @param {Uint8Array} data - The file data to upload
    * @returns {string} - The CID of the uploaded file
    */
-  async uploadFile(data) {
+  async uploadBytes(data) {
     if (!this.filesystem) {
       this.initialize();
     }
 
     const cid = await this.filesystem.addBytes(data);
-    console.log('File uploaded. CID:', cid.toString());
     return cid.toString();
   }
 
@@ -77,9 +77,9 @@ class IPFSNode {
    * @param {string} cid - The CID of the file to download
    * @returns {Uint8Array} - The downloaded file data
    */
-  async downloadFile(cid) {
+  async downloadBytes(cid) {
     if (!this.filesystem) {
-      throw new Error('IPFS filesystem not initialized. Call initialize() first.');
+      this.initialize();
     }
 
     const decoder = new TextDecoder();
@@ -88,9 +88,29 @@ class IPFSNode {
     for await (const chunk of this.filesystem.cat(cid)) {
       fileData += decoder.decode(chunk, { stream: true });
     }
-
-    console.log('File downloaded. Data:', fileData);
     return fileData;
+  }
+
+  /**
+   * Uploads a file to the IPFS node from a file path
+   * @param {string} filePath - The file path to upload
+   * @returns {string} - The CID of the uploaded file
+   */
+  async uploadFile(filePath) {
+    const data = fs.readFileSync(filePath);
+    const cid = await this.uploadBytes(new Uint8Array(data));
+    await this.node.pins.add(cid);
+    return cid;
+  }
+
+  /**
+   * Downloads a file from the IPFS node and saves it to a file
+   * @param {string} cid - The CID of the file to download
+   * @param {string} filePath - The path to save the downloaded file
+   */
+  async downloadFile(cid, filePath) {
+    const data = await this.downloadBytes(cid);
+    fs.writeFileSync(filePath, data);
   }
 }
 
