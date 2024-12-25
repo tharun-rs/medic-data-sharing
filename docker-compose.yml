@@ -1,0 +1,39 @@
+version: '3.9'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017" # Expose MongoDB port
+    volumes:
+      - mongodb_data:/data/db # Persist MongoDB data
+
+  edge-app:
+    build:
+      context: ./edge-app
+    container_name: edge-app
+    ports:
+      - "3000:3000" # Expose the Edge App API port
+    environment:
+      - PORT=3000
+      - MONGO_URI=mongodb://mongodb:27017
+      - MONGO_DB_NAME=edgeApp
+    depends_on:
+      - mongodb
+    restart: always
+
+  # ipfs-node:
+  #   build:
+  #     context: ./ipfs-node
+  #   container_name: ipfs-node
+  #   ports:
+  #     - "5001:5001" # Expose IPFS HTTP API port
+  #     - "4001:4001" # Expose libp2p port
+  #   volumes:
+  #     - ipfs_data:/usr/src/app/data
+  #   restart: always
+
+volumes:
+  mongodb_data:
+  ipfs_data:

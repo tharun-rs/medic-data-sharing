@@ -1,4 +1,4 @@
-import P2PNode from './p2pNode/p2pNode.js'
+import P2PNode from './p2pComm/p2pNode.js'
 
 const sender =  new P2PNode;
 const recv = new P2PNode;
