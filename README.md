@@ -9,7 +9,6 @@ This project implements a blockchain-based edge computing and IPFS framework for
 - [Getting Started](#getting-started)
 - [Services](#services)
 - [Docker Compose Commands](#docker-compose-commands)
-- [License](#license)
 
 ## Project Overview
 
@@ -97,7 +96,3 @@ Here are some common Docker Compose commands for managing the project:
   ```bash
   docker-compose up --build
   ```
-
-## License
-
-This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
