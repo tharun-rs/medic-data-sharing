@@ -20,17 +20,18 @@ class IPFSNode {
    * Initializes the IPFS node and filesystem
    */
   async initialize() {
-    // The blockstore is where we store the blocks that make up files
-    const blockstore = new FsBlockstore('./blockstore');
+    const blockstorePath = process.env.BLOCKSTORE_PATH;
+    const datastorePath = process.env.DATASTORE_PATH;
 
-    // Application-specific data lives in the datastore
-    const datastore = new FsDatastore('./datastore');
+    // Initialize the blockstore and datastore
+    const blockstore = new FsBlockstore(blockstorePath);
+    const datastore = new FsDatastore(datastorePath);
 
     // libp2p is the networking layer that underpins Helia
     const libp2p = await createLibp2p({
       datastore,
       addresses: {
-        listen: ['/ip4/127.0.0.1/tcp/0'],
+        listen: ['/ip4/127.0.0.1/tcp/4002'],
       },
       transports: [tcp()],
       connectionEncrypters: [noise()],
@@ -38,7 +39,7 @@ class IPFSNode {
       peerDiscovery: [
         bootstrap({
           list: [
-            '/ip4/127.0.0.1/tcp/4001/p2p/12D3KooWFw8DGQWWe4UHgJbo2vaKtdHgzAB2HuKYqELouHfG7ZDZ',
+            '/ip4/192.168.115.174/tcp/4001/p2p/12D3KooWFw8DGQWWe4UHgJbo2vaKtdHgzAB2HuKYqELouHfG7ZDZ',
           ],
         }),
       ],
@@ -79,17 +80,28 @@ class IPFSNode {
    */
   async downloadBytes(cid) {
     if (!this.filesystem) {
-      this.initialize();
+      await this.initialize();  // Ensure initialization is complete before proceeding
     }
-
-    const decoder = new TextDecoder();
-    let fileData = '';
-
+  
+    const fileChunks = [];
+  
+    // Collect all chunks from the filesystem
     for await (const chunk of this.filesystem.cat(cid)) {
-      fileData += decoder.decode(chunk, { stream: true });
+      fileChunks.push(chunk);
     }
-    return fileData;
+  
+    // Combine the chunks into a single Uint8Array
+    const totalLength = fileChunks.reduce((total, chunk) => total + chunk.length, 0);
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of fileChunks) {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    }
+  
+    return result;  // Return the combined Uint8Array
   }
+  
 
   /**
    * Uploads a file to the IPFS node from a file path

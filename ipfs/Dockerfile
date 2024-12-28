@@ -1,5 +1,8 @@
 # Use the official Node.js image as the base image
-FROM node:23
+FROM node:23-alpine
+
+# Install the required library
+RUN apk update && apk add --no-cache libc6-compat
 
 # Set the working directory inside the container
 WORKDIR /usr/src/app
@@ -15,6 +18,7 @@ COPY . .
 
 # Expose the port that your IPFS server will run on
 EXPOSE 3001
+EXPOSE 4002
 
 # Start the application when the container starts
 CMD ["node", "ipfsServer.js"]
