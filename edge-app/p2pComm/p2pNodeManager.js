@@ -26,9 +26,9 @@ class p2pNodeManager {
   }
 
   async initialize() {
-     this.p2pNode = await new P2PNode();
-     await this.p2pNode.initialize();
-     await this.p2pNode.setNodeListener(this.sendResponse.bind(this));
+    this.p2pNode = await new P2PNode();
+    await this.p2pNode.initialize();
+    await this.p2pNode.setNodeListener(this.sendResponse.bind(this));
   }
 
   /**
@@ -38,7 +38,7 @@ class p2pNodeManager {
    */
   async sendResponse(jsonData) {
     const type = jsonData.type;
-    
+
     if (type === "request") {
       //get file id from jsonData
       //fetch document from db using fileid
