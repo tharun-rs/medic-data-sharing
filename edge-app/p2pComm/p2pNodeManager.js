@@ -1,9 +1,28 @@
 import p2pNode from './p2pNode.js'; // Import your existing P2PNode class
+import { getIPFSKeysCollection } from '../database/models.js';
+import crypto from 'crypto';
 
 class p2pNodeManager {
   constructor() {
     // Create a new P2PNode instance
     this.p2pNode = new p2pNode();
+
+    //generate rsa key
+    // Generate RSA key pair
+    const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+      publicKeyEncoding: {
+        type: 'spki',
+        format: 'pem',
+      },
+      privateKeyEncoding: {
+        type: 'pkcs8',
+        format: 'pem',
+      },
+    });
+
+    this.rsaPublicKey = publicKey;
+    this.rsaPrivateKey = privateKey;
 
     //  Initialize the node
     this.p2pNode.initialize();
@@ -17,7 +36,49 @@ class p2pNodeManager {
    * This will be called whenever a message is received by the P2PNode.
    * @param {JSON} jsonData The incoming JSON data
    */
-  sendResponse(jsonData) {
+  async sendResponse(jsonData) {
+    const type = jsonData.type;
+    
+    if (type === "request") {
+      //get file id from jsonData
+      //fetch document from db using fileid
+      //encrypt AES key and Cid (from db) using rsa_key (from jsonData)
+      //return json { fileId: , cid: , aes_key: } using sendToNode
+      const { fileId, rsa_key: requesterPublicKey } = jsonData;
+
+      try {
+        // Fetch the document from the database using fileId
+        const fileRecord = await getIPFSKeysCollection().findOne({ fileId });
+
+        if (!fileRecord) {
+          console.error(`File with ID ${fileId} not found.`);
+          return;
+        }
+
+        const { aesKey, cid } = fileRecord;
+
+        // Encrypt the AES key and CID using the requester's public RSA key
+        const encryptedAesKey = crypto.publicEncrypt(
+          requesterPublicKey,
+          Buffer.from(aesKey, 'utf-8')
+        );
+
+        const encryptedCid = crypto.publicEncrypt(
+          requesterPublicKey,
+          Buffer.from(cid, 'utf-8')
+        );
+
+        // Send the encrypted response back to the requester
+        this.p2pNode.sendToNode(jsonData.address, {
+          fileId,
+          aes_key: encryptedAesKey.toString('base64'),
+          cid: encryptedCid.toString('base64'),
+          type: "response",
+        });
+      } catch (error) {
+        console.error(`Error handling request for fileId ${fileId}:`, error);
+      }
+    }
   }
 
   /**
@@ -26,6 +87,12 @@ class p2pNodeManager {
    * @param {String} fileId FileID of the file to be requested
    */
   async sendRequest(receiverAddr, fileId) {
+    this.p2pNode.sendToNode(receiverAddr, {
+      fileId: fileId,
+      address: this.p2pNode.getMultiaddrs(),
+      rsa_key: this.rsaPublicKey,
+      type: "request",
+    })
   }
 
 }
