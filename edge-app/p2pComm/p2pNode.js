@@ -83,9 +83,9 @@ class P2PNode {
    * Sets a listener for incoming messages
    * @param {function} processFunction Function to handle incoming JSON data
    */
-  setNodeListener(processFunction) {
+  async setNodeListener(processFunction) {
     if (!this.node) {
-      throw new Error('Node is not initialized. Call initialize() first.');
+      await this.initialize();
     }
 
     this.node.handle(protocol, async ({ stream }) => {
@@ -99,7 +99,14 @@ class P2PNode {
    * @returns {Multiaddr[]} list of multiaddresses for the given node
    */
   getMultiaddrs() {
-    return this.node.getMultiaddrs();
+    if (!this.node) {
+      this.initialize().then( () => {
+        const addresses = this.node.getMultiaddrs().map((addr) => addr.toString());
+        return addresses[addresses.length - 1];
+      });
+    }
+    const addresses = this.node.getMultiaddrs().map((addr) => addr.toString());
+    return addresses[addresses.length - 1];
   }
 }
 

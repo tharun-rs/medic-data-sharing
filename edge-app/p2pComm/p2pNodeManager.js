@@ -1,11 +1,11 @@
-import p2pNode from './p2pNode.js'; // Import your existing P2PNode class
 import { getIPFSKeysCollection } from '../database/models.js';
 import crypto from 'crypto';
+import P2PNode from './p2pNode.js';
 
 class p2pNodeManager {
   constructor() {
     // Create a new P2PNode instance
-    this.p2pNode = new p2pNode();
+    this.p2pNode = null;
 
     //generate rsa key
     // Generate RSA key pair
@@ -23,12 +23,12 @@ class p2pNodeManager {
 
     this.rsaPublicKey = publicKey;
     this.rsaPrivateKey = privateKey;
+  }
 
-    //  Initialize the node
-    this.p2pNode.initialize();
-
-    // Bind the `sendResponse` method to the P2PNode instance
-    this.p2pNode.setNodeListener(this.sendResponse.bind(this));
+  async initialize() {
+     this.p2pNode = await new P2PNode();
+     await this.p2pNode.initialize();
+     await this.p2pNode.setNodeListener(this.sendResponse.bind(this));
   }
 
   /**
