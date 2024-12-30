@@ -79,6 +79,27 @@ class p2pNodeManager {
         console.error(`Error handling request for fileId ${fileId}:`, error);
       }
     }
+
+    if (type === "response") {
+      try {
+        // Decrypt the CID and AES key using the private RSA key
+        const decryptedAesKey = crypto.privateDecrypt(
+          this.rsaPrivateKey,
+          Buffer.from(jsonData.aes_key, 'base64')
+        ).toString('utf-8');
+
+        const decryptedCid = crypto.privateDecrypt(
+          this.rsaPrivateKey,
+          Buffer.from(jsonData.cid, 'base64')
+        ).toString('utf-8');
+
+        // Print the decrypted CID and AES key
+        console.log(`Decrypted CID: ${decryptedCid}`);
+        console.log(`Decrypted AES Key: ${decryptedAesKey}`);
+      } catch (error) {
+        console.error("Error decrypting response data:", error);
+      }
+    }
   }
 
   /**
