@@ -18,3 +18,4 @@ EXPOSE 3000
 
 # Start the application
 CMD ["node", "edgeServer.js"]
+# CMD ["node", "p2pComm/nodeManager.test.js"]
