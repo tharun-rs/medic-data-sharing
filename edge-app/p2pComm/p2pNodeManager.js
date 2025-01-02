@@ -48,7 +48,8 @@ class p2pNodeManager {
 
       try {
         // Fetch the document from the database using fileId
-        const fileRecord = await getIPFSKeysCollection().findOne({ fileId });
+        const ipfs_collection = await getIPFSKeysCollection()
+        const fileRecord = await ipfs_collection.findOne({ fileId });
 
         if (!fileRecord) {
           console.error(`File with ID ${fileId} not found.`);
@@ -57,6 +58,7 @@ class p2pNodeManager {
 
         const { aesKey, cid } = fileRecord;
 
+        //console.log(aesKey);
         // Encrypt the AES key and CID using the requester's public RSA key
         const encryptedAesKey = crypto.publicEncrypt(
           requesterPublicKey,
