@@ -95,7 +95,7 @@ class p2pNodeManager {
           Buffer.from(jsonData.cid, 'base64')
         ).toString('utf-8');
 
-        // Print the decrypted CID and AES key
+        // todo : make IPFS call
         console.log(`Decrypted CID: ${decryptedCid}`);
         console.log(`Decrypted AES Key: ${decryptedAesKey}`);
       } catch (error) {
