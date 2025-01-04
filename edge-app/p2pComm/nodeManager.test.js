@@ -37,11 +37,12 @@ import { getIPFSKeysCollection } from '../database/models.js';
     // });
 
     // Node 1 sends a request to Node 2
-    await nodeManager1.sendRequest(
+    const file = await nodeManager1.sendRequest(
       await nodeManager2.p2pNode.getMultiaddrs(), // Receiver address
       dummyFileId // File ID to request
     );
 
+    console.log(file);
     // Delay to allow for message processing
     await new Promise((resolve) => setTimeout(resolve, 5000));
 

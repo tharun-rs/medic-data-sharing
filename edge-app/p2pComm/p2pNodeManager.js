@@ -23,6 +23,7 @@ class p2pNodeManager {
 
     this.rsaPublicKey = publicKey;
     this.rsaPrivateKey = privateKey;
+    this.pendingRequests = new Map();
   }
 
   async initialize() {
@@ -40,10 +41,6 @@ class p2pNodeManager {
     const type = jsonData.type;
 
     if (type === "request") {
-      //get file id from jsonData
-      //fetch document from db using fileid
-      //encrypt AES key and Cid (from db) using rsa_key (from jsonData)
-      //return json { fileId: , cid: , aes_key: } using sendToNode
       const { fileId, rsa_key: requesterPublicKey } = jsonData;
 
       try {
@@ -95,11 +92,24 @@ class p2pNodeManager {
           Buffer.from(jsonData.cid, 'base64')
         ).toString('utf-8');
 
-        // todo : make IPFS call
-        console.log(`Decrypted CID: ${decryptedCid}`);
-        console.log(`Decrypted AES Key: ${decryptedAesKey}`);
+        // todo : make IPFS call using decryptedCid and decryptedAesKey
+        // Notify waiting Promises for the fileId
+        if (this.pendingRequests.has(jsonData.fileId)) {
+          this.pendingRequests.get(jsonData.fileId).resolve({ 
+            aesKey: decryptedAesKey, 
+            cid: decryptedCid 
+          });
+          this.pendingRequests.delete(jsonData.fileId);
+        }
+
       } catch (error) {
         console.error("Error decrypting response data:", error);
+        if (this.pendingRequests.has(jsonData.fileId)) {
+          this.pendingRequests.get(jsonData.fileId).reject({ 
+            message: error
+          });
+          this.pendingRequests.delete(jsonData.fileId);
+        }
       }
     }
   }
@@ -108,14 +118,21 @@ class p2pNodeManager {
    * Sends a request to another peer
    * @param {String} receiverAddr Multiaddress of the peer to send the request to
    * @param {String} fileId FileID of the file to be requested
+   * @returns {Promise} promise of the requested fileId
    */
   async sendRequest(receiverAddr, fileId) {
+    const requestPromise = new Promise((resolve, reject) => {
+      this.pendingRequests.set(fileId, { resolve, reject });
+    });
+
     this.p2pNode.sendToNode(receiverAddr, {
       fileId: fileId,
       address: this.p2pNode.getMultiaddrs(),
       rsa_key: this.rsaPublicKey,
       type: "request",
-    })
+    });
+
+    return requestPromise;
   }
 
 }
