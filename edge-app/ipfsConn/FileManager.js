@@ -50,6 +50,7 @@ export async function uploadFile(filePath) {
         }
 
         // Generate a random file ID
+        // todo: include logic for fileId generation
         const fileId = Math.floor(Math.random() * 1e6).toString();
 
         // Get the file extension
