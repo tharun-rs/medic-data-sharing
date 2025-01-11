@@ -4,7 +4,8 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "bootstrap": "node p2p_conn_configs/bootstrapNode.js"
+    "bootstrap": "node p2p_conn_configs/bootstrapNode.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --silent"
   },
   "author": "Tharun R S",
   "license": "ISC",
@@ -26,5 +27,10 @@
     "mongo": "^0.1.0",
     "mongodb": "^6.12.0",
     "mongosh": "^2.3.8"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.26.0",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0"
   }
 }

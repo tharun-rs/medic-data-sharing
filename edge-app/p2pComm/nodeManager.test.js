@@ -1,63 +1,51 @@
 import p2pNodeManager from './p2pNodeManager.js';
 import { getIPFSKeysCollection } from '../database/models.js';
 
-(async () => {
-  try {
+describe("P2P communication test", () => {
+  let dummyFileId;
+  let dummyData;
+  let nodeManager1;
+  let nodeManager2;
+  let collection;
+
+  beforeAll(async () => {
     // Insert a dummy document into the database
-    const dummyFileId = 'dummyFile123';
-    const dummyData = {
+    dummyFileId = 'dummyFile123';
+    dummyData = {
       fileId: dummyFileId,
       aesKey: 'dummyAESKey123',
       cid: 'dummyCID123',
     };
 
-    const collection = await getIPFSKeysCollection();
+    collection = await getIPFSKeysCollection();
     await collection.insertOne(dummyData);
 
-    console.log('Inserted dummy document:', dummyData);
-
     // Create two P2P node managers
-    const nodeManager1 =  new p2pNodeManager();
-    const nodeManager2 = new p2pNodeManager();
+    nodeManager1 = new p2pNodeManager();
+    nodeManager2 = new p2pNodeManager();
     await nodeManager1.initialize();
-    await nodeManager2.initialize()
+    await nodeManager2.initialize();
 
-    // Wait for both nodes to be initialized and started
-    // await Promise.all([
-    //   nodeManager1.initialize(),
-    //   nodeManager2.initialize(),
-    // ]);
+  });
 
-    console.log('Node 1 multiaddress:', nodeManager1.p2pNode.getMultiaddrs());
-    console.log('Node 2 multiaddress:', nodeManager2.p2pNode.getMultiaddrs());
-
-    // // Node 2 will listen for incoming messages and log them
-    // nodeManager2.p2pNode.setNodeListener((jsonData) => {
-    //   console.log('Node 2 received JSON:', jsonData);
-    // });
-
+  it("Fetching file metadata from other node", async () => {
     // Node 1 sends a request to Node 2
-    const file = await nodeManager1.sendRequest(
+    const fileData = await nodeManager1.sendRequest(
       await nodeManager2.p2pNode.getMultiaddrs(), // Receiver address
       dummyFileId // File ID to request
     );
+    expect(fileData.aesKey).toBe(dummyData.aesKey);
+    expect(fileData.cid).toBe(dummyData.cid);
+  });
 
-    console.log(file);
-    // Delay to allow for message processing
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-
+  afterAll(async () => {
     // Clean up: Delete the dummy document from the database
     await collection.deleteOne({ fileId: dummyFileId });
-    console.log('Deleted dummy document with fileId:', dummyFileId);
 
     // Stop both nodes
     await Promise.all([
       nodeManager1.p2pNode.node.stop(),
       nodeManager2.p2pNode.node.stop(),
     ]);
-
-    console.log('Test completed successfully.');
-  } catch (error) {
-    console.error('Error during test execution:', error);
-  }
-})();
+  });
+});

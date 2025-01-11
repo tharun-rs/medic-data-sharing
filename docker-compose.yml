@@ -10,6 +10,7 @@ services:
       - mongodb_data:/data/db # Persist MongoDB data
     networks:
       - my_network # Attach to the custom network
+    command: ["mongod", "--quiet", "--logpath", "/dev/null"]  # Suppress logs
 
   edge-app:
     build:
@@ -25,7 +26,7 @@ services:
     depends_on:
       - mongodb
       - ipfs-node
-    restart: always
+    # restart: always
     networks:
       - my_network # Attach to the custom network
 
@@ -41,7 +42,7 @@ services:
     environment:
       - BLOCKSTORE_PATH=/usr/src/app/data/blockstore
       - DATASTORE_PATH=/usr/src/app/data/datastore
-    restart: always
+    # restart: always
     networks:
       - my_network # Attach to the custom network
 
