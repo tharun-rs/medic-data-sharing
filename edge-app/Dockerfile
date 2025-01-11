@@ -17,5 +17,4 @@ COPY . .
 EXPOSE 3000
 
 # Start the application
-# CMD ["node", "edgeServer.js"]
-CMD ["npm", "test"]
+CMD ["node", "edgeServer.js"]

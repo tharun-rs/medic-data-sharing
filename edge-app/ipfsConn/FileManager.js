@@ -1,16 +1,12 @@
 import fs from 'fs/promises';
 import crypto from 'crypto';
 import axios from 'axios';
-import LRU from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 import path from 'path';
-import dotenv from 'dotenv';
 import { getIPFSKeysCollection } from '../database/models.js';
 
-// Load environment variables
-dotenv.config("./.env");
-
 // Initialize LRU cache
-const cache = new LRU({ max: 100 });
+const cache = new LRUCache({ max: 100 });
 
 /**
  * Upload a file to IPFS.

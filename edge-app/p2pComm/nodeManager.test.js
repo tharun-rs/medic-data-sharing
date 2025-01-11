@@ -28,7 +28,7 @@ describe("P2P communication test", () => {
 
   });
 
-  it("Fetching file metadata from other node", async () => {
+  it("fetches file metadata from other node", async () => {
     // Node 1 sends a request to Node 2
     const fileData = await nodeManager1.sendRequest(
       await nodeManager2.p2pNode.getMultiaddrs(), // Receiver address

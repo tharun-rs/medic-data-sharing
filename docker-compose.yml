@@ -8,8 +8,6 @@ services:
       - "27017:27017" # Expose MongoDB port
     volumes:
       - mongodb_data:/data/db # Persist MongoDB data
-    networks:
-      - my_network # Attach to the custom network
     command: ["mongod", "--quiet", "--logpath", "/dev/null"]  # Suppress logs
 
   edge-app:
@@ -23,12 +21,11 @@ services:
       - MONGO_URI=mongodb://mongodb:27017
       - MONGO_DB_NAME=edgeApp
       - IPFS_API_URI=http://ipfs-node:3001 # Connect to IPFS server
+      - NODE_NO_WARNINGS=1
     depends_on:
       - mongodb
       - ipfs-node
     # restart: always
-    networks:
-      - my_network # Attach to the custom network
 
   ipfs-node:
     build:
@@ -43,13 +40,7 @@ services:
       - BLOCKSTORE_PATH=/usr/src/app/data/blockstore
       - DATASTORE_PATH=/usr/src/app/data/datastore
     # restart: always
-    networks:
-      - my_network # Attach to the custom network
 
 volumes:
   mongodb_data:
   ipfs_data:
-
-networks:
-  my_network:
-    driver: bridge # Use the bridge driver for networking
