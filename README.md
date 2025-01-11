@@ -1,6 +1,10 @@
+Here’s an updated version of your `README.md` with the added testing commands for running tests in the Docker container:
+
+---
+
 # Medical Data Sharing
 
-This project implements a blockchain-based edge computing and IPFS framework for secure and efficient medical data storage. It uses Docker Compose to easily spin up and manage the necessary services, including MongoDB, IPFS nodes, edge nodes and mongodb instances required for the framework.
+This project implements a blockchain-based edge computing and IPFS framework for secure and efficient medical data storage. It uses Docker Compose to easily spin up and manage the necessary services, including MongoDB, IPFS nodes, edge nodes, and MongoDB instances required for the framework.
 
 ## Table of Contents
 
@@ -9,6 +13,7 @@ This project implements a blockchain-based edge computing and IPFS framework for
 - [Getting Started](#getting-started)
 - [Services](#services)
 - [Docker Compose Commands](#docker-compose-commands)
+- [Testing](#testing)
 
 ## Project Overview
 
@@ -96,3 +101,32 @@ Here are some common Docker Compose commands for managing the project:
   ```bash
   docker-compose up --build
   ```
+
+## Testing
+First, start the docker-compose, to bring up all services.
+To run tests within the Docker containers, you have two options:
+
+### Option A: Quick Test (No Shell)
+Run the following command to execute the tests in the container directly:
+
+```bash
+docker exec <edge-app/ipfs-node> npm test
+```
+
+### Option B: Run Tests with a Shell
+
+1. **Enter the container shell**:
+
+   ```bash
+   docker exec -it <edge-app/ipfs-node sh
+   ```
+
+2. **Run the tests inside the shell**:
+
+   Once inside the container shell, run:
+
+   ```bash
+   npm test
+   ```
+
+This allows you to have more control over the environment and see the output with color coding.
