@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "bootstrap": "node p2p_conn_configs/bootstrapNode.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --silent"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test-logs": "node --experimental-vm-modules node_modules/jest/bin/jest.js --silent"
   },
   "author": "Tharun R S",
   "license": "ISC",
