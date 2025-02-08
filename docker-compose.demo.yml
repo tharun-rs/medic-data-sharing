@@ -1,0 +1,104 @@
+version: '3.9'
+
+services:
+  mongodb1:
+    image: mongo
+    container_name: mongodb1
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb1_data:/data/db
+    command: ["mongod", "--quiet", "--logpath", "/dev/null"]  # Suppress logs
+
+  mongodb2:
+    image: mongo
+    container_name: mongodb2
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb2_data:/data/db
+    command: ["mongod", "--quiet", "--logpath", "/dev/null"]  # Suppress logs
+
+  bootstrap-node:
+    build:
+      context: ./ipfs # Path to your bootstrap node Dockerfile
+      dockerfile: Dockerfile.bootstrap
+    container_name: bootstrap-node
+    ports:
+      - "4003:4003"  # Expose bootstrap node libp2p port
+    environment:
+      - BLOCKSTORE_PATH=/usr/src/app/data/blockstore
+      - DATASTORE_PATH=/usr/src/app/data/datastore
+    volumes:
+      - bootstrap_data:/usr/src/app/data
+
+  edge-app1:
+    build:
+      context: ./edge-app
+    container_name: edge-app1
+    ports:
+      - "3000:3000" # Expose Edge App API port
+      - "4002:4002" # Expose libp2p port
+    environment:
+      - PORT=3000
+      - MONGO_URI=mongodb://mongodb1:27017  # Access mongodb1 by container name
+      - MONGO_DB_NAME=edgeApp
+      - IPFS_API_URI=http://ipfs-node1:3001  # Access ipfs-node1 by container name
+      - NODE_NO_WARNINGS=1
+    depends_on:
+      - mongodb1
+      - ipfs-node1
+
+  edge-app2:
+    build:
+      context: ./edge-app
+    container_name: edge-app2
+    ports:
+      - "3001:3000" # Expose Edge App API port
+      - "4005:4002" # Expose libp2p port
+    environment:
+      - PORT=3000
+      - MONGO_URI=mongodb://mongodb1:27017  # Access mongodb2 by container name
+      - MONGO_DB_NAME=edgeApp
+      - IPFS_API_URI=http://ipfs-node1:3001  # Access ipfs-node2 by container name
+      - NODE_NO_WARNINGS=1
+    depends_on:
+      - mongodb2
+      - ipfs-node2
+
+  ipfs-node1:
+    build:
+      context: ./ipfs
+    container_name: ipfs-node1
+    ports:
+      - "3002:3001"  # Expose IPFS HTTP API port
+      - "4004:4004"  # Expose libp2p port
+    volumes:
+      - ipfs1_data:/usr/src/app/data
+    environment:
+      - BLOCKSTORE_PATH=/usr/src/app/data/blockstore
+      - DATASTORE_PATH=/usr/src/app/data/datastore
+    depends_on:
+      - bootstrap-node
+
+  ipfs-node2:
+    build:
+      context: ./ipfs
+    container_name: ipfs-node2
+    ports:
+      - "3003:3001"  # Expose IPFS HTTP API port with different host port
+      - "4006:4004"  # Expose libp2p port with different host port
+    volumes:
+      - ipfs2_data:/usr/src/app/data
+    environment:
+      - BLOCKSTORE_PATH=/usr/src/app/data/blockstore
+      - DATASTORE_PATH=/usr/src/app/data/datastore
+    depends_on:
+      - bootstrap-node
+
+volumes:
+  mongodb1_data:
+  mongodb2_data:
+  ipfs1_data:
+  ipfs2_data:
+  bootstrap_data:

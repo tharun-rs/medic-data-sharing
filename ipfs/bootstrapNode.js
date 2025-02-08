@@ -39,7 +39,7 @@ const createBootstrapNode = async () => {
     const privateKey = await loadOrGenerateKey();
     const node = await createLibp2p({
         addresses: {
-            listen: [`/ip4/0.0.0.0/tcp/4001`],
+            listen: [`/ip4/0.0.0.0/tcp/4003`],
         },
         privateKey,
         transports: [tcp()],
@@ -54,6 +54,19 @@ const createBootstrapNode = async () => {
     node.getMultiaddrs().forEach((addr) => {
         console.log(addr.toString());
     });
+
+    node.addEventListener('peer:discovery', (evt) => {
+        console.log('Found peer:', evt.detail.toString());
+      });
+    
+      node.addEventListener('peer:connect', (evt) => {
+        console.log('Connected to peer:', evt.detail.toString());
+      });
+    
+      node.addEventListener('peer:disconnect', (evt) => {
+        console.log('Disconnected from peer:', evt.detail.toString());
+      });
+
     
     //write bootstrap url to file
     if (!fs.existsSync(bootstrapUrlPath)) {

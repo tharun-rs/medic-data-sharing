@@ -27,7 +27,7 @@ class P2PNode {
    */
   async initialize() {
     let bootstrapList = [];
-
+  
     // Read bootstrap URLs from the file, if it exists
     if (fs.existsSync(bootstrapUrlPath)) {
       const fileContent = fs.readFileSync(bootstrapUrlPath, 'utf8');
@@ -35,9 +35,9 @@ class P2PNode {
     } else {
       console.warn('Bootstrap file not found. Using default configuration.');
     }
-
+  
     this.node = await createLibp2p({
-      addresses: { listen: ['/ip4/0.0.0.0/tcp/0'] },
+      addresses: { listen: ['/ip4/0.0.0.0/tcp/4002'] },
       transports: [tcp()],
       connectionEncrypters: [noise()],
       streamMuxers: [yamux()],
@@ -54,7 +54,7 @@ class P2PNode {
         },
       }),
     });
-
+  
     await this.node.start(); // Start the node
     console.log('Node is running at:', this.node.getMultiaddrs().map((addr) => addr.toString()));
   }

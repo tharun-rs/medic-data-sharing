@@ -29,35 +29,47 @@ class IPFSNode {
 
     // libp2p is the networking layer that underpins Helia
     const libp2p = await createLibp2p({
-      datastore,
-      addresses: {
-        listen: ['/ip4/127.0.0.1/tcp/4002'],
-      },
-      transports: [tcp()],
-      connectionEncrypters: [noise()],
-      streamMuxers: [yamux()],
-      peerDiscovery: [
-        bootstrap({
-          list: [
-            '/ip4/192.168.115.174/tcp/4001/p2p/12D3KooWFw8DGQWWe4UHgJbo2vaKtdHgzAB2HuKYqELouHfG7ZDZ',
-          ],
-        }),
-      ],
-      services: {
-        identify: identify(),
-      },
+        datastore,
+        addresses: {
+            listen: ['/ip4/0.0.0.0/tcp/4004'],
+        },
+        transports: [tcp()],
+        connectionEncrypters: [noise()],
+        streamMuxers: [yamux()],
+        peerDiscovery: [
+            bootstrap({
+                list: [
+                    '/ip4/192.168.100.10/tcp/4003/p2p/12D3KooWFw8DGQWWe4UHgJbo2vaKtdHgzAB2HuKYqELouHfG7ZDZ',
+                ],
+            }),
+        ],
+        // services: {
+        //     identify: identify(),
+        // },
     });
 
     // Create a Helia node
     this.node = await createHelia({
-      datastore,
-      blockstore,
-      libp2p,
+        datastore,
+        blockstore,
+        libp2p,
+    });
+
+    libp2p.addEventListener('peer:discovery', (evt) => {
+      console.log('Found peer:', evt.detail.id.toString());
+    });
+  
+    libp2p.addEventListener('peer:connect', (evt) => {
+      console.log('Connected to peer:', evt.detail.toString());
+    });
+  
+    libp2p.addEventListener('peer:disconnect', (evt) => {
+      console.log('Disconnected from peer:', evt.detail.toString());
     });
 
     // Initialize the UnixFS filesystem
     this.filesystem = unixfs(this.node);
-  }
+}
 
   /**
    * Uploads a file to the IPFS node

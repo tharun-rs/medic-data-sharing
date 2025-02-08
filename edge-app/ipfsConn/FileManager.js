@@ -104,7 +104,7 @@ export async function downloadFile(fileId, downloadDirectory) {
         }
 
         const { cid, encKey, iv, extension } = metadata;
-
+        console.log(metadata);
         // Check if encKey and iv are valid
         if (!encKey || !iv) {
             throw new Error('Encryption key or IV is missing in metadata.');
@@ -133,8 +133,10 @@ export async function downloadFile(fileId, downloadDirectory) {
         // Save the decrypted file to the specified directory
         const fileName = `${fileId}.${extension}`;
         const filePath = path.join(downloadDirectory, fileName);
-        
+        console.log(filePath);
+        console.log(decryptedData);
         await fs.writeFile(filePath, decryptedData);
+        console.log("Downloaded");
 
         // Save the file to cache
         cache.set(fileId, decryptedData);

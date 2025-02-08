@@ -15,6 +15,7 @@ COPY . .
 
 # Expose the port the app runs on
 EXPOSE 3000
+EXPOSE 4002
 
 # Start the application
 CMD ["node", "edgeServer.js"]
