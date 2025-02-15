@@ -6,16 +6,8 @@ import { multiaddr } from '@multiformats/multiaddr';
 import { bootstrap } from '@libp2p/bootstrap';
 import { kadDHT } from '@libp2p/kad-dht';
 import { jsonToStream, streamToJSON } from './streams.js';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
 
 const protocol = '/json-exchange/1.0.0';
-
-// Get the current file's directory
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const bootstrapUrlPath = path.join(__dirname, '/BOOTSTRAP_URL.txt');
 
 class P2PNode {
   constructor() {
@@ -26,15 +18,6 @@ class P2PNode {
    * Initializes the Libp2p node with bootstrap addresses and configuration
    */
   async initialize() {
-    let bootstrapList = [];
-  
-    // Read bootstrap URLs from the file, if it exists
-    if (fs.existsSync(bootstrapUrlPath)) {
-      const fileContent = fs.readFileSync(bootstrapUrlPath, 'utf8');
-      bootstrapList = fileContent.split('\n').filter((line) => line.trim() !== '');
-    } else {
-      console.warn('Bootstrap file not found. Using default configuration.');
-    }
   
     this.node = await createLibp2p({
       addresses: { listen: ['/ip4/0.0.0.0/tcp/4002'] },
@@ -43,7 +26,7 @@ class P2PNode {
       streamMuxers: [yamux()],
       peerDiscovery: [
         bootstrap({
-          list: bootstrapList,
+          list: [`/ip4/${process.env.BOOTSTRAP_NODE_IP}/tcp/4001/p2p/12D3KooWSZ1ToCuUcao2MY3Z3Mbnik6qbWzjrgGZZH3PEuzcTDr2`],
           interval: 20000,
         }),
       ],

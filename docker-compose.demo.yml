@@ -29,8 +29,6 @@ services:
     environment:
       - BLOCKSTORE_PATH=/usr/src/app/data/blockstore
       - DATASTORE_PATH=/usr/src/app/data/datastore
-    volumes:
-      - bootstrap_data:/usr/src/app/data
 
   edge-app1:
     build:
@@ -78,6 +76,7 @@ services:
     environment:
       - BLOCKSTORE_PATH=/usr/src/app/data/blockstore
       - DATASTORE_PATH=/usr/src/app/data/datastore
+      - BOOTSTRAP_NODE_IP=bootstrap-node  # Use the service name as the hostname
     depends_on:
       - bootstrap-node
 
@@ -93,6 +92,7 @@ services:
     environment:
       - BLOCKSTORE_PATH=/usr/src/app/data/blockstore
       - DATASTORE_PATH=/usr/src/app/data/datastore
+      - BOOTSTRAP_NODE_IP=bootstrap-node  # Use the service name as the hostname
     depends_on:
       - bootstrap-node
 
@@ -101,4 +101,3 @@ volumes:
   mongodb2_data:
   ipfs1_data:
   ipfs2_data:
-  bootstrap_data:

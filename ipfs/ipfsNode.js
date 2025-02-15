@@ -2,7 +2,6 @@ import { noise } from '@chainsafe/libp2p-noise';
 import { yamux } from '@chainsafe/libp2p-yamux';
 import { unixfs } from '@helia/unixfs';
 import { bootstrap } from '@libp2p/bootstrap';
-import { identify } from '@libp2p/identify';
 import { tcp } from '@libp2p/tcp';
 import { FsDatastore } from 'datastore-fs';
 import { FsBlockstore } from 'blockstore-fs';
@@ -39,13 +38,10 @@ class IPFSNode {
         peerDiscovery: [
             bootstrap({
                 list: [
-                    '/ip4/192.168.100.10/tcp/4003/p2p/12D3KooWFw8DGQWWe4UHgJbo2vaKtdHgzAB2HuKYqELouHfG7ZDZ',
+                    `/ip4/${process.env.BOOTSTRAP_NODE_IP}/tcp/4003/p2p/12D3KooWFw8DGQWWe4UHgJbo2vaKtdHgzAB2HuKYqELouHfG7ZDZ`,
                 ],
             }),
         ],
-        // services: {
-        //     identify: identify(),
-        // },
     });
 
     // Create a Helia node
