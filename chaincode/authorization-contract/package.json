@@ -1,17 +1,20 @@
 {
-  "name": "chaincode",
-  "version": "1.0.0",
-  "description": "Chaincode to be deployed on the peer node",
-  "main": "index.js",
-  "scripts": {
+    "name": "asset-transfer-basic",
+    "version": "1.0.0",
+    "description": "Asset-Transfer-Basic contract implemented in JavaScript",
+    "main": "index.js",
+    "engines": {
+        "node": ">=18"
+    },
+    "scripts": {
         "lint": "eslint *.js */**.js",
         "pretest": "npm run lint",
         "test": "nyc mocha --recursive",
         "start": "fabric-chaincode-node start"
     },
     "engineStrict": true,
-    "author": "",
-    "license": "",
+    "author": "Hyperledger",
+    "license": "Apache-2.0",
     "dependencies": {
         "fabric-contract-api": "~2.5",
         "fabric-shim": "~2.5",
