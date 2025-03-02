@@ -4,6 +4,7 @@ const { Contract } = require('fabric-contract-api');
 const stringify = require('json-stringify-deterministic');
 const sortKeysRecursive = require('sort-keys-recursive');
 const { v4: uuidv4 } = require('uuid');
+const AuthorizationContract = require('../../authorization-contract/lib/authorization');
 
 class DataUploadContract extends Contract {
     
@@ -11,26 +12,17 @@ class DataUploadContract extends Contract {
         console.log('Ledger initialized');
     }
 
-    async queryAuthorizationForPatient(ctx, patient_id, data_custodian) {
-        const queryString = {
-            selector: {
-                patient_id: patient_id,
-                data_custodian: data_custodian
-            }
-        };
-        const results = await this.queryWithQueryString(ctx, JSON.stringify(queryString));
-        return results.length > 0 && results[0].write_access !== false ? results : [];
-    }
-
     async uploadPIIRecord(ctx, patient_id, data_custodian, custodian_address, internal_file_id, data_hash, time_stamp) {
-        const auth = await this.queryAuthorizationForPatient(ctx, patient_id, data_custodian);
-        if (auth.length === 0) {
+        const authorizationContract = new AuthorizationContract();
+        const auth = await authorizationContract.queryAuthorizationForPatient(ctx, patient_id, data_custodian);
+        if (auth.length === 0 || auth[0].write_access === false) {
             throw new Error(`Authorization denied for data custodian: ${data_custodian}`);
         }
 
         const piiRecord = {
             __id__: uuidv4(),
-            auth_id: auth[0].__id__,
+            patient_id,
+            file_id,
             file_type: "PII",
             data_custodian,
             custodian_address,
@@ -43,14 +35,16 @@ class DataUploadContract extends Contract {
     }
 
     async uploadPHIRecord(ctx, patient_id, data_custodian, custodian_address, internal_file_id, file_type, file_tag, data_hash, time_stamp) {
-        const auth = await this.queryAuthorizationForPatient(ctx, patient_id, data_custodian);
-        if (auth.length === 0) {
+        const authorizationContract = new AuthorizationContract();
+        const auth = await authorizationContract.queryAuthorizationForPatient(ctx, patient_id, data_custodian);
+        if (auth.length === 0 || auth[0].write_access === false) {
             throw new Error(`Authorization denied for data custodian: ${data_custodian}`);
         }
 
         const phiRecord = {
             __id__: uuidv4(),
-            auth_id: auth[0].__id__,
+            patient_id,
+            file_id,
             file_type: "PHI",
             data_custodian,
             custodian_address,
