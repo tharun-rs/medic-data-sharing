@@ -4,7 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 class PHIAccessRequestContract extends Contract {
     async createAccessRequestWithFileID(ctx, file_id, data_custodian, requestor, requestor_address) {
         const patient_id = await this.getPatientIDFromFile(ctx, file_id);
-        const auth = await this.queryAuthorizationForPatient(ctx, patient_id, requestor);
+        const auth = await this.queryAuthorizationsForPatient(ctx, patient_id, requestor);
 
         if (!auth || !auth.read_access) {
             throw new Error('Access denied: requestor does not have read access to this PHI.');
@@ -12,7 +12,7 @@ class PHIAccessRequestContract extends Contract {
 
         const request = {
             __id__: uuidv4(),
-            auth_id: auth.__id__,
+            auth_id: auth[0].__id__,
             file_id: file_id,
             data_custodian: data_custodian,
             requestor: requestor,
@@ -25,7 +25,7 @@ class PHIAccessRequestContract extends Contract {
     }
 
     async createAccessRequestWithFilters(ctx, requestor, requestor_address, file_type, file_tag, begin_time, end_time) {
-        const auth = await this.queryAuthorizationForAnonymousData(ctx, requestor);
+        const auth = await this.queryAuthorizationsForAnonymousData(ctx, requestor);
         if (!auth || !auth.anonymous_phi_access) {
             throw new Error('Access denied: requestor does not have anonymous PHI access.');
         }
