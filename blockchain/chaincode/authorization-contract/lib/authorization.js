@@ -4,13 +4,15 @@ const stringify  = require('json-stringify-deterministic');
 const sortKeysRecursive  = require('sort-keys-recursive');
 const { Contract } = require('fabric-contract-api');
 const Authorization = require('./authorization');
+const { v4: uuidv4 } = require('uuid');
 
 class Authorization extends Contract {
 
     async InitLedger(ctx) {
         const assets = [
             {
-                _id: 'asset1',
+                _id: uuidv4(),
+                file_id: 'asset1',
                 file_type: 'AUTH',
                 data_custodian: 'Org1',
                 custodian_address: 'libp2p_address_1',
@@ -21,7 +23,8 @@ class Authorization extends Contract {
                 anonymous_phi_access: false
             },
             {
-                _id: 'asset2',
+                _id: uuidv4(),
+                file_id: 'asset2',
                 file_type: 'AUTH',
                 data_custodian: 'Org2',
                 custodian_address: 'libp2p_address_2',
@@ -40,7 +43,8 @@ class Authorization extends Contract {
 
     async uploadNewAuthorization(ctx, file_id, data_custodian, custodian_address, internal_file_id, patient_id, data_hash, time_stamp, anonymous_phi_access) {
         const authRecord = {
-            _id: file_id,
+            _id: uuidv4(),
+            file_id: file_id,
             file_type: 'AUTH',
             data_custodian,
             custodian_address,
