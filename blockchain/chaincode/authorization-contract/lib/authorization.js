@@ -6,12 +6,12 @@ const { Contract } = require('fabric-contract-api');
 const Authorization = require('./authorization');
 const { v4: uuidv4 } = require('uuid');
 
-class Authorization extends Contract {
+class AuthorizationContract extends Contract {
 
     async InitLedger(ctx) {
         const assets = [
             {
-                _id: uuidv4(),
+                __id__: uuidv4(),
                 file_id: 'asset1',
                 file_type: 'AUTH',
                 data_custodian: 'Org1',
@@ -23,7 +23,7 @@ class Authorization extends Contract {
                 anonymous_phi_access: false
             },
             {
-                _id: uuidv4(),
+                __id__: uuidv4(),
                 file_id: 'asset2',
                 file_type: 'AUTH',
                 data_custodian: 'Org2',
@@ -37,13 +37,13 @@ class Authorization extends Contract {
         ];
 
         for (const asset of assets) {
-            await ctx.stub.putState(asset._id, Buffer.from(stringify(sortKeysRecursive(asset))));
+            await ctx.stub.putState(asset.__id__, Buffer.from(stringify(sortKeysRecursive(asset))));
         }
     }
 
     async uploadNewAuthorization(ctx, file_id, data_custodian, custodian_address, internal_file_id, patient_id, data_hash, time_stamp, anonymous_phi_access) {
         const authRecord = {
-            _id: uuidv4(),
+            __id__: uuidv4(),
             file_id: file_id,
             file_type: 'AUTH',
             data_custodian,
@@ -86,4 +86,4 @@ class Authorization extends Contract {
     }
 }
 
-module.exports = Authorization;
+module.exports = AuthorizationContract;
