@@ -4,18 +4,25 @@ const { Contract } = require('fabric-contract-api');
 const stringify = require('json-stringify-deterministic');
 const sortKeysRecursive = require('sort-keys-recursive');
 const { v4: uuidv4 } = require('uuid');
-const AuthorizationContract = require('../../authorization-contract/lib/authorization');
 
 class DataUploadContract extends Contract {
-    
-    async InitLedger(ctx) {
-        console.log('Ledger initialized');
-    }
 
-    async uploadPIIRecord(ctx, patient_id, data_custodian, custodian_address, internal_file_id, data_hash, time_stamp) {
-        const authorizationContract = new AuthorizationContract();
-        const auth = await authorizationContract.queryAuthorizationForPatient(ctx, patient_id, data_custodian);
-        if (auth.length === 0 || auth[0].write_access === false) {
+    async uploadPIIRecord(ctx, patient_id, data_custodian, custodian_address, data_hash, time_stamp) {
+        const auth = await ctx.stub.invokeChaincode(
+            'AuthorizationContract', // Target contract name
+            ['queryAuthorizationForPatient', patient_id, data_custodian], // Function name and arguments
+            ctx.stub.getChannelID() // Channel name (optional)
+        );
+
+        if (auth.status !== 200) {
+            throw new Error(`Failed to invoke AccessControlContract: ${auth.message}`);
+        }
+
+        // Convert payload to JSON
+        const authPayload = JSON.parse(auth.payload.toString());
+
+        // Check if the response is empty or if write_access is false in any entry
+        if (!authPayload.length || authPayload.some(record => !record.Record.write_access)) {
             throw new Error(`Authorization denied for data custodian: ${data_custodian}`);
         }
 
@@ -26,7 +33,6 @@ class DataUploadContract extends Contract {
             file_type: "PII",
             data_custodian,
             custodian_address,
-            internal_file_id,
             data_hash,
             time_stamp
         };
@@ -34,10 +40,22 @@ class DataUploadContract extends Contract {
         return piiRecord.__id__;
     }
 
-    async uploadPHIRecord(ctx, patient_id, data_custodian, custodian_address, internal_file_id, file_type, file_tag, data_hash, time_stamp) {
-        const authorizationContract = new AuthorizationContract();
-        const auth = await authorizationContract.queryAuthorizationForPatient(ctx, patient_id, data_custodian);
-        if (auth.length === 0 || auth[0].write_access === false) {
+    async uploadPHIRecord(ctx, patient_id, data_custodian, custodian_address, file_type, file_tag, data_hash, time_stamp) {
+        const auth = await ctx.stub.invokeChaincode(
+            'AuthorizationContract', // Target contract name
+            ['queryAuthorizationForPatient', patient_id, data_custodian], // Function name and arguments
+            ctx.stub.getChannelID()
+        );
+
+        if (auth.status !== 200) {
+            throw new Error(`Failed to invoke AccessControlContract: ${auth.message}`);
+        }
+
+        // Convert payload to JSON
+        const authPayload = JSON.parse(auth.payload.toString());
+
+        // Check if the response is empty or if write_access is false in any entry
+        if (!authPayload.length || authPayload.some(record => !record.Record.write_access)) {
             throw new Error(`Authorization denied for data custodian: ${data_custodian}`);
         }
 
@@ -48,7 +66,6 @@ class DataUploadContract extends Contract {
             file_type: "PHI",
             data_custodian,
             custodian_address,
-            internal_file_id,
             file_type,
             file_tag,
             data_hash,
@@ -93,12 +110,12 @@ class DataUploadContract extends Contract {
     async queryWithQueryString(ctx, queryString) {
         const results = [];
         const iterator = await ctx.stub.getQueryResult(queryString);
-    
+
         try {
             while (true) {
                 const res = await iterator.next();
                 if (res.done) break;
-    
+
                 const jsonString = res.value.value.toString('utf8');
                 try {
                     results.push(JSON.parse(jsonString));
@@ -109,10 +126,10 @@ class DataUploadContract extends Contract {
         } finally {
             await iterator.close(); // Ensure iterator is closed to free resources
         }
-    
+
         return results;
     }
-    
+
 }
 
 module.exports = DataUploadContract;

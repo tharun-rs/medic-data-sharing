@@ -1,18 +1,26 @@
 const { Contract } = require('fabric-contract-api');
 const { v4: uuidv4 } = require('uuid');
-const AuthorizationContract = require('../../authorization-contract/lib/authorization');
 
 class PIIAccessContract extends Contract {
-    constructor() {
-        super();
-        this.authorizationContract = new AuthorizationContract();
-    }
 
     async createAccessRequestWithFileID(ctx, file_id, data_custodian, requestor, requestor_address) {
-        // Query authorization
-        const authResponse = await this.authorizationContract.queryAuthorizationForPatient(ctx, requestor);
-        if (!authResponse || authResponse.length === 0 || authResponse[0].read_access === false) {
-            throw new Error(`Access denied for requestor ${requestor}`);
+
+        const auth = await ctx.stub.invokeChaincode(
+            'AuthorizationContract', // Target contract name
+            ['queryAuthorizationForPatient', patient_id, requestor], // Function name and arguments
+            ctx.stub.getChannelID()
+        );
+
+        if (auth.status !== 200) {
+            throw new Error(`Failed to invoke AccessControlContract: ${auth.message}`);
+        }
+
+        // Convert payload to JSON
+        const authPayload = JSON.parse(auth.payload.toString());
+
+        // Check if the response is empty or if write_access is false in any entry
+        if (!authPayload.length || authPayload.some(record => !record.Record.read_access)) {
+            throw new Error(`Authorization denied for data custodian: ${data_custodian}`);
         }
 
         const requestID = uuidv4();
@@ -24,7 +32,7 @@ class PIIAccessContract extends Contract {
             data_custodian: data_custodian,
             requestor: requestor,
             requestor_address: requestor_address,
-            internal_file_id: file_id,
+            file_id: file_id,
             time_stamp: timeStamp
         };
 

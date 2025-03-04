@@ -1,15 +1,24 @@
 const { Contract } = require('fabric-contract-api');
 const { v4: uuidv4 } = require('uuid');
-const AuthorizationContract = require('../../authorization-contract/lib/authorization');
 
 class PHIAccessRequestContract extends Contract {
     async createAccessRequestWithFileID(ctx, file_id, data_custodian, requestor, requestor_address) {
-        const patient_id = await this.getPatientIDFromFile(ctx, file_id);
-        const authorizationContract = new AuthorizationContract();
-        const auth = await authorizationContract.queryAuthorizationForPatient(ctx, patient_id, requestor);
+        const auth = await ctx.stub.invokeChaincode(
+            'AuthorizationContract', // Target contract name
+            ['queryAuthorizationForPatientByFileId', file_id, requestor], // Function name and arguments
+            ctx.stub.getChannelID()
+        );
 
-        if (!auth || auth.length === 0 || !auth[0].read_access) {
-            throw new Error('Access denied: requestor does not have read access to this PHI.');
+        if (auth.status !== 200) {
+            throw new Error(`Failed to invoke AccessControlContract: ${auth.message}`);
+        }
+
+        // Convert payload to JSON
+        const authPayload = JSON.parse(auth.payload.toString());
+
+        // Check if the response is empty or if write_access is false in any entry
+        if (!authPayload.length || authPayload.some(record => !record.Record.read_access)) {
+            throw new Error(`Authorization denied for data custodian: ${data_custodian}`);
         }
 
         const request = {
@@ -18,7 +27,7 @@ class PHIAccessRequestContract extends Contract {
             data_custodian: data_custodian,
             requestor: requestor,
             requestor_address: requestor_address,
-            internal_file_id: file_id,
+            file_id: file_id,
             time_stamp: new Date().toISOString()
         };
         await ctx.stub.putState(request.__id__, Buffer.from(JSON.stringify(request)));
@@ -26,11 +35,22 @@ class PHIAccessRequestContract extends Contract {
     }
 
     async createAccessRequestWithFilters(ctx, requestor, requestor_address, file_type, file_tag, begin_time, end_time) {
-        const authorizationContract = new AuthorizationContract();
-        const auth = await authorizationContract.queryAuthorizationForAnonymousData(ctx, requestor);
+        const auth = await ctx.stub.invokeChaincode(
+            'AuthorizationContract', // Target contract name
+            ['queryAuthorizationForAnonymousData', requestor], // Function name and arguments
+            ctx.stub.getChannelID()
+        );
 
-        if (!auth || auth.length === 0 || !auth[0].anonymous_phi_access) {
-            throw new Error('Access denied: requestor does not have anonymous PHI access.');
+        if (auth.status !== 200) {
+            throw new Error(`Failed to invoke AccessControlContract: ${auth.message}`);
+        }
+
+        // Convert payload to JSON
+        const authPayload = JSON.parse(auth.payload.toString());
+
+        // Check if the response is empty or if write_access is false in any entry
+        if (!authPayload.length || authPayload.some(record => !record.Record.read_access)) {
+            throw new Error(`Authorization denied for data custodian: ${data_custodian}`);
         }
 
         const request = {
