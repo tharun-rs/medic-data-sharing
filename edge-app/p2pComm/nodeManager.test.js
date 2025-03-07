@@ -1,5 +1,5 @@
-import p2pNodeManager from './p2pNodeManager.js';
-import { getIPFSKeysCollection } from '../database/models.js';
+const p2pNodeManager = require('./p2pNodeManager');
+const { getIPFSKeysCollection } = require('../database/models');
 
 describe("P2P communication test", () => {
   let dummyFileId;

@@ -1,6 +1,5 @@
-export default {
-    transform: {},
-    moduleFileExtensions: ['js', 'json'],
-    testEnvironment: 'node',
-  };
-  
+module.exports = {
+  transform: {},
+  moduleFileExtensions: ['js', 'json'],
+  testEnvironment: 'node',
+};

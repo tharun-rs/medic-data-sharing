@@ -1,12 +1,12 @@
 /* eslint-disable no-console */
 
-import * as lp from 'it-length-prefixed'
-import map from 'it-map'
-import { pipe } from 'it-pipe'
-import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
-import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
+const lp = require('it-length-prefixed');
+const map = require('it-map');
+const { pipe } = require('it-pipe');
+const { fromString: uint8ArrayFromString } = require('uint8arrays/from-string');
+const { toString: uint8ArrayToString } = require('uint8arrays/to-string');
 
-export async function jsonToStream(jsonData, stream) {
+async function jsonToStream(jsonData, stream) {
     const jsonString = JSON.stringify(jsonData);
     const jsonBuffer = uint8ArrayFromString(jsonString);
 
@@ -20,7 +20,7 @@ export async function jsonToStream(jsonData, stream) {
     );
 }
 
-export async function streamToJSON(stream) {
+async function streamToJSON(stream) {
     let jsonData;
     await pipe(
         // Read from the stream source
@@ -29,7 +29,7 @@ export async function streamToJSON(stream) {
         (source) => lp.decode(source),
         // Turn buffers into strings
         (source) => map(source, (buf) => uint8ArrayToString(buf.subarray())),
-        async function (source){
+        async function (source) {
             for await (const msg of source) {
                 try {
                     jsonData = JSON.parse(msg);
@@ -42,3 +42,4 @@ export async function streamToJSON(stream) {
     return jsonData;
 }
 
+module.exports = { jsonToStream, streamToJSON };

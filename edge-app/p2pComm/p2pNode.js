@@ -1,11 +1,11 @@
-import { createLibp2p } from 'libp2p';
-import { tcp } from '@libp2p/tcp';
-import { noise } from '@chainsafe/libp2p-noise';
-import { yamux } from '@chainsafe/libp2p-yamux';
-import { multiaddr } from '@multiformats/multiaddr';
-import { bootstrap } from '@libp2p/bootstrap';
-import { kadDHT } from '@libp2p/kad-dht';
-import { jsonToStream, streamToJSON } from './streams.js';
+const { createLibp2p } = require('libp2p');
+const { tcp } = require('@libp2p/tcp');
+const { noise } = require('@chainsafe/libp2p-noise');
+const { yamux } = require('@chainsafe/libp2p-yamux');
+const { multiaddr } = require('@multiformats/multiaddr');
+const { bootstrap } = require('@libp2p/bootstrap');
+const { kadDHT } = require('@libp2p/kad-dht');
+const { jsonToStream, streamToJSON } = require('./streams');
 
 const protocol = '/json-exchange/1.0.0';
 
@@ -18,7 +18,6 @@ class P2PNode {
    * Initializes the Libp2p node with bootstrap addresses and configuration
    */
   async initialize() {
-  
     this.node = await createLibp2p({
       addresses: { listen: ['/ip4/0.0.0.0/tcp/4002'] },
       transports: [tcp()],
@@ -37,7 +36,7 @@ class P2PNode {
         },
       }),
     });
-  
+
     await this.node.start(); // Start the node
     console.log('Node is running at:', this.node.getMultiaddrs().map((addr) => addr.toString()));
   }
@@ -78,12 +77,11 @@ class P2PNode {
   }
 
   /**
-   * 
    * @returns {Multiaddr[]} list of multiaddresses for the given node
    */
   getMultiaddrs() {
     if (!this.node) {
-      this.initialize().then( () => {
+      this.initialize().then(() => {
         const addresses = this.node.getMultiaddrs().map((addr) => addr.toString());
         return addresses[addresses.length - 1];
       });
@@ -93,4 +91,4 @@ class P2PNode {
   }
 }
 
-export default P2PNode;
+module.exports = P2PNode;

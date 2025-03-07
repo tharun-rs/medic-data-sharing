@@ -1,9 +1,8 @@
-import { MongoClient } from 'mongodb';
-import dotenv from 'dotenv';
+const { MongoClient } = require('mongodb');
+const dotenv = require('dotenv');
 
-//Load the variables
+// Load the variables
 dotenv.config("./.env");
-
 
 const url = process.env.MONGO_URI;
 const dbName = process.env.MONGO_DB_NAME;
@@ -15,7 +14,7 @@ let db;
  * Connects to MongoDB and provides a database instance.
  * @returns {Promise<Db>} - MongoDB database instance
  */
-export async function connectDB() {
+async function connectDB() {
     if (db) {
         return db;
     }
@@ -36,9 +35,11 @@ export async function connectDB() {
 /**
  * Disconnects from MongoDB.
  */
-export async function disconnectDB() {
+async function disconnectDB() {
     if (client) {
         await client.close();
         console.log('Disconnected from MongoDB.');
     }
 }
+
+module.exports = { connectDB, disconnectDB };

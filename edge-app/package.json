@@ -1,7 +1,6 @@
 {
   "name": "edge-app",
   "version": "1.0.0",
-  "type": "module",
   "main": "index.js",
   "scripts": {
     "bootstrap": "node p2p_conn_configs/bootstrapNode.js",
@@ -23,6 +22,7 @@
     "axios": "^1.7.9",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "fabric-network": "^2.2.20",
     "libp2p": "^2.3.1",
     "lru-cache": "^11.0.2",
     "mongo": "^0.1.0",

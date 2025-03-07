@@ -1,18 +1,14 @@
-import { createLibp2p } from 'libp2p';
-import { tcp } from '@libp2p/tcp';
-import { noise } from '@chainsafe/libp2p-noise';
-import { yamux } from '@chainsafe/libp2p-yamux';
-import { generateKeyPair } from '@libp2p/crypto/keys';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const { createLibp2p } = require('libp2p');
+const { tcp } = require('@libp2p/tcp');
+const { noise } = require('@chainsafe/libp2p-noise');
+const { yamux } = require('@chainsafe/libp2p-yamux');
+const { generateKeyPair } = require('@libp2p/crypto/keys');
+const fs = require('fs');
+const path = require('path');
 
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const bootstrapUrlPath = path.join(__dirname,'/BOOTSTRAP_URL.txt');
-const keyPath = path.join(__dirname,'BOOTSTRAP_KEYS.json');
-
+const __dirname = __filename ? path.dirname(__filename) : process.cwd();
+const bootstrapUrlPath = path.join(__dirname, 'BOOTSTRAP_URL.txt');
+const keyPath = path.join(__dirname, 'BOOTSTRAP_KEYS.json');
 
 const loadOrGenerateKey = async () => {
     let privateKeyData;
@@ -28,18 +24,15 @@ const loadOrGenerateKey = async () => {
 
     let privateKey = await generateKeyPair('Ed25519');
     privateKey.raw = new Uint8Array(Object.values(privateKeyData.raw));
-    privateKey.publicKey.raw = new Uint8Array(Object.values(privateKeyData.publicKey.raw));;
-
+    privateKey.publicKey.raw = new Uint8Array(Object.values(privateKeyData.publicKey.raw));
 
     return privateKey;
 };
-
 
 const createBootstrapNode = async () => {
     const privateKey = await loadOrGenerateKey();
     const node = await createLibp2p({
         addresses: {
-            // Listen on a specific port for incoming connections
             listen: [`/ip4/0.0.0.0/tcp/4001`],
         },
         privateKey,
@@ -55,8 +48,8 @@ const createBootstrapNode = async () => {
     node.getMultiaddrs().forEach((addr) => {
         console.log(addr.toString());
     });
-    
-    //write bootstrap url to file
+
+    // Write bootstrap URL to file
     if (!fs.existsSync(bootstrapUrlPath)) {
         const multiaddrs = node.getMultiaddrs().map(addr => addr.toString()).join('\n');
         fs.writeFileSync(bootstrapUrlPath, multiaddrs);
@@ -66,5 +59,4 @@ const createBootstrapNode = async () => {
 
 createBootstrapNode().catch((err) => {
     console.error("Error starting node: ", err);
-})
-
+});
