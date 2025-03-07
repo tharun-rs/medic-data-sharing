@@ -1,9 +1,12 @@
+'use strict';
+
 const { Contract } = require('fabric-contract-api');
-const { v4: uuidv4 } = require('uuid');
+const stringify = require('json-stringify-deterministic');
+const sortKeysRecursive = require('sort-keys-recursive');
 
 class PIIAccessContract extends Contract {
 
-    async createAccessRequestWithFileID(ctx, file_id, data_custodian, requestor, requestor_address) {
+    async createAccessRequestWithFileID(ctx, file_id, data_custodian, requestor, requestor_address, time_stamp) {
 
         const auth = await ctx.stub.invokeChaincode(
             'AuthorizationContract', // Target contract name
@@ -23,20 +26,16 @@ class PIIAccessContract extends Contract {
             throw new Error(`Authorization denied for data custodian: ${data_custodian}`);
         }
 
-        const requestID = uuidv4();
-        const timeStamp = new Date().toISOString();
-
         const piiRequest = {
-            __id__: requestID,
-            auth_id: authResponse[0].__id__,
-            data_custodian: data_custodian,
-            requestor: requestor,
-            requestor_address: requestor_address,
-            file_id: file_id,
-            time_stamp: timeStamp
+            data_custodian,
+            requestor,
+            requestor_address,
+            file_id,
+            time_stamp
         };
 
-        await ctx.stub.putState(requestID, Buffer.from(JSON.stringify(piiRequest)));
+        const compositeKey = ctx.stub.createCompositeKey('PIIAccess', [file_id, requestor]);
+        await ctx.stub.putState(compositeKey, Buffer.from(stringify(sortKeysRecursive(piiRequest))));
         return JSON.stringify(piiRequest);
     }
 

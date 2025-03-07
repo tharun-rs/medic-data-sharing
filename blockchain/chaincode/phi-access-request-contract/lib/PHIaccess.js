@@ -1,8 +1,11 @@
+'use strict';
+
 const { Contract } = require('fabric-contract-api');
-const { v4: uuidv4 } = require('uuid');
+const stringify = require('json-stringify-deterministic');
+const sortKeysRecursive = require('sort-keys-recursive');
 
 class PHIAccessRequestContract extends Contract {
-    async createAccessRequestWithFileID(ctx, file_id, data_custodian, requestor, requestor_address) {
+    async createAccessRequestWithFileID(ctx, file_id, data_custodian, requestor, requestor_address, time_stamp) {
         const auth = await ctx.stub.invokeChaincode(
             'AuthorizationContract', // Target contract name
             ['queryAuthorizationForPatientByFileId', file_id, requestor], // Function name and arguments
@@ -22,19 +25,18 @@ class PHIAccessRequestContract extends Contract {
         }
 
         const request = {
-            __id__: uuidv4(),
-            auth_id: auth[0].__id__,
-            data_custodian: data_custodian,
-            requestor: requestor,
-            requestor_address: requestor_address,
-            file_id: file_id,
-            time_stamp: new Date().toISOString()
+            data_custodian,
+            requestor,
+            requestor_address,
+            file_id,
+            time_stamp
         };
-        await ctx.stub.putState(request.__id__, Buffer.from(JSON.stringify(request)));
-        return request.__id__;
+        const compositeKey = ctx.stub.createCompositeKey('PHIAccess', [file_id, requestor]);
+        await ctx.stub.putState(compositeKey, Buffer.from(stringify(sortKeysRecursive(request))));
+        return JSON.stringify(request);
     }
 
-    async createAccessRequestWithFilters(ctx, requestor, requestor_address, file_type, file_tag, begin_time, end_time) {
+    async createAccessRequestWithFilters(ctx, requestor, requestor_address, file_type, file_tag, begin_time, end_time, time_stamp) {
         const auth = await ctx.stub.invokeChaincode(
             'AuthorizationContract', // Target contract name
             ['queryAuthorizationForAnonymousData', requestor], // Function name and arguments
@@ -49,23 +51,23 @@ class PHIAccessRequestContract extends Contract {
         const authPayload = JSON.parse(auth.payload.toString());
 
         // Check if the response is empty or if write_access is false in any entry
-        if (!authPayload.length || authPayload.some(record => !record.Record.read_access)) {
+        if (!authPayload.length || authPayload.some(record => !record==Record.read_access)) {
             throw new Error(`Authorization denied for data custodian: ${data_custodian}`);
         }
 
         const request = {
-            __id__: uuidv4(),
-            auth_id: auth[0].__id__,
-            requestor: requestor,
-            requestor_address: requestor_address,
-            file_type: file_type,
-            file_tag: file_tag,
-            begin_time: begin_time,
-            end_time: end_time,
-            time_stamp: new Date().toISOString()
+            requestor,
+            requestor_address,
+            file_type,
+            file_tag,
+            begin_time,
+            end_time,
+            time_stamp
         };
-        await ctx.stub.putState(request.__id__, Buffer.from(JSON.stringify(request)));
-        return request.__id__;
+        
+        const compositeKey = ctx.stub.createCompositeKey('PHIAccess', [file_id, requestor]);
+        await ctx.stub.putState(compositeKey, Buffer.from(stringify(sortKeysRecursive(request))));
+        return JSON.stringify(request);
     }
 
     async queryAccessRequestsByFileId(ctx, file_id, requestor, requestor_address, data_custodian) {

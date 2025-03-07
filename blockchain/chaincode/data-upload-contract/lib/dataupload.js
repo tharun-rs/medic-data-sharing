@@ -3,11 +3,10 @@
 const { Contract } = require('fabric-contract-api');
 const stringify = require('json-stringify-deterministic');
 const sortKeysRecursive = require('sort-keys-recursive');
-const { v4: uuidv4 } = require('uuid');
 
 class DataUploadContract extends Contract {
 
-    async uploadPIIRecord(ctx, patient_id, data_custodian, custodian_address, data_hash, time_stamp) {
+    async uploadPIIRecord(ctx, patient_id, file_id, data_custodian, custodian_address, data_hash, time_stamp) {
         const auth = await ctx.stub.invokeChaincode(
             'AuthorizationContract', // Target contract name
             ['queryAuthorizationForPatient', patient_id, data_custodian], // Function name and arguments
@@ -15,19 +14,18 @@ class DataUploadContract extends Contract {
         );
 
         if (auth.status !== 200) {
-            throw new Error(`Failed to invoke AccessControlContract: ${auth.message}`);
+            throw new Error(`Failed to invoke AuthorizationContract: ${auth.message}`);
         }
 
         // Convert payload to JSON
         const authPayload = JSON.parse(auth.payload.toString());
 
         // Check if the response is empty or if write_access is false in any entry
-        if (!authPayload.length || authPayload.some(record => !record.Record.write_access)) {
+        if (!authPayload.length || authPayload.some(record => !record.write_access)) {
             throw new Error(`Authorization denied for data custodian: ${data_custodian}`);
         }
 
         const piiRecord = {
-            __id__: uuidv4(),
             patient_id,
             file_id,
             file_type: "PII",
@@ -36,31 +34,31 @@ class DataUploadContract extends Contract {
             data_hash,
             time_stamp
         };
-        await ctx.stub.putState(piiRecord.__id__, Buffer.from(stringify(sortKeysRecursive(piiRecord))));
-        return piiRecord.__id__;
+        const compositeKey = ctx.stub.createCompositeKey('PIIRecord', [file_id, data_custodian]);
+        await ctx.stub.putState(compositeKey, Buffer.from(stringify(sortKeysRecursive(piiRecord))));
+        return compositeKey;
     }
 
-    async uploadPHIRecord(ctx, patient_id, data_custodian, custodian_address, file_type, file_tag, data_hash, time_stamp) {
+    async uploadPHIRecord(ctx, patient_id, file_id, data_custodian, custodian_address, file_type, file_tag, data_hash, time_stamp) {
         const auth = await ctx.stub.invokeChaincode(
-            'AuthorizationContract', // Target contract name
-            ['queryAuthorizationForPatient', patient_id, data_custodian], // Function name and arguments
+            'AuthorizationContract',
+            ['queryAuthorizationForPatient', patient_id, data_custodian],
             ctx.stub.getChannelID()
         );
 
         if (auth.status !== 200) {
-            throw new Error(`Failed to invoke AccessControlContract: ${auth.message}`);
+            throw new Error(`Failed to invoke AuthorizationContract: ${auth.message}`);
         }
 
         // Convert payload to JSON
         const authPayload = JSON.parse(auth.payload.toString());
 
         // Check if the response is empty or if write_access is false in any entry
-        if (!authPayload.length || authPayload.some(record => !record.Record.write_access)) {
+        if (!authPayload.length || authPayload.some(record => !record.write_access)) {
             throw new Error(`Authorization denied for data custodian: ${data_custodian}`);
         }
 
         const phiRecord = {
-            __id__: uuidv4(),
             patient_id,
             file_id,
             file_type: "PHI",
@@ -71,8 +69,9 @@ class DataUploadContract extends Contract {
             data_hash,
             time_stamp
         };
-        await ctx.stub.putState(phiRecord.__id__, Buffer.from(stringify(sortKeysRecursive(phiRecord))));
-        return phiRecord.__id__;
+        const compositeKey = ctx.stub.createCompositeKey('PHIRecord', [file_id, data_custodian]);
+        await ctx.stub.putState(compositeKey, Buffer.from(stringify(sortKeysRecursive(phiRecord))));
+        return compositeKey;
     }
 
     async getAllPIIByPatientID(ctx, patient_id) {
