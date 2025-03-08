@@ -1,4 +1,4 @@
-const { connectToNetwork } = require('./connect');
+const connectToNetwork = require('./connect');
 
 /**
  * Uploads a new authorization record to the blockchain.
@@ -13,12 +13,13 @@ const { connectToNetwork } = require('./connect');
  */
 async function uploadAuthorization (file_id, patient_id, data_hash, data_custodian, custodian_address, read_access, write_access, anonymous_phi_access) {
     try {
-        const { gateway, contract } = await connectToNetwork('AuthorizationContract');
+        const { gateway, contract } = await connectToNetwork('auth');
         const result = await contract.submitTransaction(
             'uploadNewAuthorization',
             file_id,
             patient_id,
             data_hash,
+            new Date().toISOString(),
             data_custodian,
             custodian_address,
             read_access,

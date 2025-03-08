@@ -49,6 +49,7 @@ services:
       - IPFS_API_URI=http://ipfs-node1:3001  # Access ipfs-node1 by container name
       - NODE_NO_WARNINGS=1
       - ORG_NAME=Org1
+      - ORG_ID_FOR_FOLDERS=org1
     depends_on:
       - mongodb1
       - ipfs-node1
@@ -70,6 +71,8 @@ services:
       - MONGO_DB_NAME=edgeApp
       - IPFS_API_URI=http://ipfs-node1:3001  # Access ipfs-node2 by container name
       - NODE_NO_WARNINGS=1
+      - ORG_NAME=Org2
+      - ORG_ID_FOR_FOLDERS=org2
     depends_on:
       - mongodb2
       - ipfs-node2

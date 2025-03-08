@@ -3,7 +3,7 @@ const multer = require("multer");
 const path = require("path");
 const { uploadFile } = require('../../ipfsConn/FileManager');
 const { uploadAuthorization } = require('../../peerAdapter/authorizationContracts');
-const { p2pNodeManager } = require('../../p2pComm/p2pNodeManager');
+const p2pNodeManager = require('../../p2pComm/p2pNodeManager');
 const crypto = require('crypto');
 const fs = require('fs');
 
@@ -49,6 +49,7 @@ router.post("/authorization", upload.single("file"), async (req, res) => {
         const contract = await uploadAuthorization(fileId, patientId, fileHash, process.env.ORG_NAME, nodeMultiAddr, readAccess, writeAccess, anonymousPHIAccess);
         res.json({ message: "File uploaded successfully", fileId, contract });
     } catch (error) {
+        console.log(error);
         res.status(500).json({ error: error.message });
     }
 });

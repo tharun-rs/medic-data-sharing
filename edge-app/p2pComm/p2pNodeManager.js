@@ -127,5 +127,12 @@ class P2PNodeManager {
 }
 
 const p2pNodeManager = new P2PNodeManager();
-p2pNodeManager.initialize();
+(async () => {
+    try {
+        await p2pNodeManager.initialize();
+        console.log("P2P Node is ready to handle requests.");
+    } catch (error) {
+        console.error("Failed to initialize P2P Node:", error);
+    }
+})();
 module.exports = p2pNodeManager;

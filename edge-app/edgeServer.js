@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require("cors");
-const p2pNodeManager = require('./p2pComm/p2pNodeManager');
 
 // Routes
 const fileUploadRouter = require('./routes/fileRoutes/uploadRoutes');
@@ -9,14 +8,6 @@ const fileUploadRouter = require('./routes/fileRoutes/uploadRoutes');
 const app = express();
 const port = process.env.PORT || 3000;
 
-(async () => {
-    try {
-        await p2pNodeManager.initialize();
-        console.log("P2P Node is ready to handle requests.");
-    } catch (error) {
-        console.error("Failed to initialize P2P Node:", error);
-    }
-})();
 
 // Middleware
 app.use(cors()); // Enable CORS
