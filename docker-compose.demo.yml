@@ -50,6 +50,8 @@ services:
       - NODE_NO_WARNINGS=1
       - ORG_NAME=Org1
       - ORG_ID_FOR_FOLDERS=org1
+      - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
+      - ORDERER_ADDRESS=orderer.example.com:7050
     depends_on:
       - mongodb1
       - ipfs-node1
@@ -73,6 +75,8 @@ services:
       - NODE_NO_WARNINGS=1
       - ORG_NAME=Org2
       - ORG_ID_FOR_FOLDERS=org2
+      - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
+      - ORDERER_ADDRESS=orderer.example.com:7050
     depends_on:
       - mongodb2
       - ipfs-node2
