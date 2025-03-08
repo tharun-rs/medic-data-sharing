@@ -1,6 +1,6 @@
-const { getIPFSKeysCollection } = require('../database/models.js');
+const { getIPFSKeysCollection } = require('../database/models');
 const crypto = require('crypto');
-const P2PNode = require('./p2pNode.js');
+const P2PNode = require('./p2pNode');
 
 class P2PNodeManager {
   constructor() {
@@ -44,11 +44,16 @@ class P2PNodeManager {
           return;
         }
 
-        const { aesKey, cid } = fileRecord;
+        const { encKey: aesKey, iv, cid } = fileRecord;
         
         const encryptedAesKey = crypto.publicEncrypt(
           requesterPublicKey,
           Buffer.from(aesKey, 'utf-8')
+        );
+
+        const encryptedIV = crypto.publicEncrypt(
+          requesterPublicKey,
+          Buffer.from(iv, 'utf-8')
         );
 
         const encryptedCid = crypto.publicEncrypt(
@@ -59,6 +64,7 @@ class P2PNodeManager {
         this.p2pNode.sendToNode(jsonData.address, {
           fileId,
           aes_key: encryptedAesKey.toString('base64'),
+          iv: encryptedIV.toString('base64'),
           cid: encryptedCid.toString('base64'),
           type: "response",
         });
@@ -74,6 +80,11 @@ class P2PNodeManager {
           Buffer.from(jsonData.aes_key, 'base64')
         ).toString('utf-8');
 
+        const decryptedIV = crypto.privateDecrypt(
+          this.rsaPrivateKey,
+          Buffer.from(jsonData.iv, 'base64')
+        ).toString('utf-8');
+
         const decryptedCid = crypto.privateDecrypt(
           this.rsaPrivateKey,
           Buffer.from(jsonData.cid, 'base64')
@@ -81,6 +92,7 @@ class P2PNodeManager {
 
         if (this.pendingRequests.has(jsonData.fileId)) {
           this.pendingRequests.get(jsonData.fileId).resolve({
+            iv: decryptedIV,
             aesKey: decryptedAesKey,
             cid: decryptedCid,
           });
@@ -114,4 +126,6 @@ class P2PNodeManager {
   }
 }
 
-module.exports = P2PNodeManager;
+const p2pNodeManager = new P2PNodeManager();
+p2pNodeManager.initialize();
+module.exports = p2pNodeManager;

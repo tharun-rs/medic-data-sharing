@@ -48,13 +48,14 @@ services:
       - MONGO_DB_NAME=edgeApp
       - IPFS_API_URI=http://ipfs-node1:3001  # Access ipfs-node1 by container name
       - NODE_NO_WARNINGS=1
+      - ORG_NAME=Org1
     depends_on:
       - mongodb1
       - ipfs-node1
     networks:
       - test
     volumes:
-      - ./blockchain/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com:/etc/hyperledger/fabric
+      - /home/tharunrs/medic-data-sharing/blockchain/test-network/organizations/peerOrganizations/org1.example.com:/etc/hyperledger/fabric
 
   edge-app2:
     build:
@@ -75,7 +76,7 @@ services:
     networks:
       - test
     volumes:
-      - ./blockchain/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com:/etc/hyperledger/fabric
+      - /home/tharunrs/medic-data-sharing/blockchain/test-network/organizations/peerOrganizations/org2.example.com:/etc/hyperledger/fabric
 
   ipfs-node1:
     build:

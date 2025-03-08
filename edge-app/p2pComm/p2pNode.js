@@ -1,11 +1,21 @@
-const { createLibp2p } = require('libp2p');
-const { tcp } = require('@libp2p/tcp');
-const { noise } = require('@chainsafe/libp2p-noise');
-const { yamux } = require('@chainsafe/libp2p-yamux');
-const { multiaddr } = require('@multiformats/multiaddr');
-const { bootstrap } = require('@libp2p/bootstrap');
-const { kadDHT } = require('@libp2p/kad-dht');
-const { jsonToStream, streamToJSON } = require('./streams');
+let createLibp2p, tcp, noise, yamux, multiaddr, bootstrap, kadDHT, jsonToStream, streamToJSON;
+
+async function loadDependencies() {
+  ({ createLibp2p } = await import('libp2p'));
+  ({ tcp } = await import('@libp2p/tcp'));
+  ({ noise } = await import('@chainsafe/libp2p-noise'));
+  ({ yamux } = await import('@chainsafe/libp2p-yamux'));
+  ({ multiaddr } = await import('@multiformats/multiaddr'));
+  ({ bootstrap } = await import('@libp2p/bootstrap'));
+  ({ kadDHT } = await import('@libp2p/kad-dht'));
+  ({ jsonToStream, streamToJSON } = await import('./streams.js'));
+}
+
+// Call the function to load dependencies
+loadDependencies().catch((err) => {
+  console.error('Failed to load dependencies:', err);
+  process.exit(1);
+});
 
 const protocol = '/json-exchange/1.0.0';
 
@@ -18,6 +28,7 @@ class P2PNode {
    * Initializes the Libp2p node with bootstrap addresses and configuration
    */
   async initialize() {
+    await loadDependencies();
     this.node = await createLibp2p({
       addresses: { listen: ['/ip4/0.0.0.0/tcp/4002'] },
       transports: [tcp()],
@@ -77,7 +88,7 @@ class P2PNode {
   }
 
   /**
-   * @returns {Multiaddr[]} list of multiaddresses for the given node
+   * @returns {Multiaddr} Returns multiaddr as a string
    */
   getMultiaddrs() {
     if (!this.node) {

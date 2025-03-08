@@ -1,10 +1,21 @@
 /* eslint-disable no-console */
 
-const lp = require('it-length-prefixed');
-const map = require('it-map');
-const { pipe } = require('it-pipe');
-const { fromString: uint8ArrayFromString } = require('uint8arrays/from-string');
-const { toString: uint8ArrayToString } = require('uint8arrays/to-string');
+let lp, map, pipe, uint8ArrayFromString, uint8ArrayToString;
+
+async function loadDependencies() {
+  ({ default: lp } = await import('it-length-prefixed'));
+  ({ default: map } = await import('it-map'));
+  ({ pipe } = await import('it-pipe'));
+  ({ fromString: uint8ArrayFromString } = await import('uint8arrays/from-string'));
+  ({ toString: uint8ArrayToString } = await import('uint8arrays/to-string'));
+}
+
+// Call the function to load dependencies
+loadDependencies().catch((err) => {
+  console.error('Failed to load dependencies:', err);
+  process.exit(1);
+});
+
 
 async function jsonToStream(jsonData, stream) {
     const jsonString = JSON.stringify(jsonData);
