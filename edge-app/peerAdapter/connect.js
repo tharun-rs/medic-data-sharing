@@ -27,7 +27,7 @@ const identity = {
         certificate: fs.readFileSync(certPath, 'utf8'),
         privateKey: fs.readFileSync(keyPath, 'utf8')
     },
-    mspId: `${ORG_NAME}MSP`,
+    mspId: `${process.env.ORG_NAME}MSP`,
     type: 'X.509'
 };
 
