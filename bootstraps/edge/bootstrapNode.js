@@ -1,14 +1,13 @@
-const { createLibp2p } = require('libp2p');
-const { tcp } = require('@libp2p/tcp');
-const { noise } = require('@chainsafe/libp2p-noise');
-const { yamux } = require('@chainsafe/libp2p-yamux');
-const { generateKeyPair } = require('@libp2p/crypto/keys');
-const fs = require('fs');
-const path = require('path');
+import { createLibp2p } from 'libp2p';
+import { tcp } from '@libp2p/tcp';
+import { noise } from '@chainsafe/libp2p-noise';
+import { yamux } from '@chainsafe/libp2p-yamux';
+import { generateKeyPair } from '@libp2p/crypto/keys';
+import fs from 'fs';
+import path from 'path';
 
-const __dirname = __filename ? path.dirname(__filename) : process.cwd();
-const bootstrapUrlPath = path.join(__dirname, 'BOOTSTRAP_URL.txt');
-const keyPath = path.join(__dirname, 'BOOTSTRAP_KEYS.json');
+const bootstrapUrlPath = './edge/BOOTSTRAP_URL.txt';
+const keyPath = './edge/BOOTSTRAP_KEYS.json';
 
 const loadOrGenerateKey = async () => {
     let privateKeyData;
@@ -29,7 +28,7 @@ const loadOrGenerateKey = async () => {
     return privateKey;
 };
 
-const createBootstrapNode = async () => {
+export const createBootstrapNode = async () => {
     const privateKey = await loadOrGenerateKey();
     const node = await createLibp2p({
         addresses: {
@@ -56,7 +55,3 @@ const createBootstrapNode = async () => {
     }
     return node;
 };
-
-createBootstrapNode().catch((err) => {
-    console.error("Error starting node: ", err);
-});

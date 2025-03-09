@@ -13,9 +13,9 @@ if (!connectionFile) {
 
 const profilePath = path.join(directory, connectionFile);
 let ccp = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
-ccp.peers[`peer0.${process.env.ORG_ID_FOR_FOLDERS}.example.com`].url = `grpcs://peer0.${process.env.ORG_ID_FOR_FOLDERS}.example.com:7051`; //change for running inside container
+ccp.peers[`peer0.${process.env.ORG_ID_FOR_FOLDERS}.example.com`].url = `grpcs://peer0.${process.env.ORG_ID_FOR_FOLDERS}.example.com:${process.env.PEER_PORT_NUMBER}`; //change for running inside container
 ccp.certificateAuthorities[`ca.${process.env.ORG_ID_FOR_FOLDERS}.example.com`].url = `https://ca.${process.env.ORG_ID_FOR_FOLDERS}.example.com:7054`;
-console.log(ccp);
+
 // Path to Admin identity credentials
 const certPath = `/etc/hyperledger/fabric/users/Admin@${process.env.ORG_ID_FOR_FOLDERS}.example.com/msp/signcerts/Admin@${process.env.ORG_ID_FOR_FOLDERS}.example.com-cert.pem`;
 const keyPath = `/etc/hyperledger/fabric/users/Admin@${process.env.ORG_ID_FOR_FOLDERS}.example.com/msp/keystore/priv_sk`;

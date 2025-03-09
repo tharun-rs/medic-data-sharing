@@ -15,6 +15,7 @@ COPY . .
 
 # Expose the port that your IPFS server will run on
 EXPOSE 4003
+EXPOSE 4001
 
 # Start the application when the container starts
-CMD ["node", "bootstrapNode.js"]
+CMD ["node", "start.js"]

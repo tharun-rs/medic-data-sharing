@@ -3,19 +3,22 @@
 let lp, map, pipe, uint8ArrayFromString, uint8ArrayToString;
 
 async function loadDependencies() {
-  ({ default: lp } = await import('it-length-prefixed'));
-  ({ default: map } = await import('it-map'));
-  ({ pipe } = await import('it-pipe'));
-  ({ fromString: uint8ArrayFromString } = await import('uint8arrays/from-string'));
-  ({ toString: uint8ArrayToString } = await import('uint8arrays/to-string'));
+    const lpModule = await import('it-length-prefixed');
+    lp = lpModule.default || lpModule;  // Ensure both CommonJS & ES Module compatibility
+
+    ({ default: map } = await import('it-map'));
+    ({ pipe } = await import('it-pipe'));
+    ({ fromString: uint8ArrayFromString } = await import('uint8arrays/from-string'));
+    ({ toString: uint8ArrayToString } = await import('uint8arrays/to-string'));
 }
 
-// Call the function to load dependencies
-loadDependencies().catch((err) => {
-  console.error('Failed to load dependencies:', err);
-  process.exit(1);
-});
 
+const init = (async () => {
+    console.log("init call received");
+    await loadDependencies();
+    console.log('dependencies loaded');
+    console.log('lp:', lp);
+})();
 
 async function jsonToStream(jsonData, stream) {
     const jsonString = JSON.stringify(jsonData);

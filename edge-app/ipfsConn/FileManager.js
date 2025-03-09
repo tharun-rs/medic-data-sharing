@@ -118,4 +118,27 @@ async function downloadFile(fileId) {
     }
 }
 
-module.exports = { uploadFile, downloadFile };
+async function downloadFileWithCID(fileId, cid, encKey, iv, extension) {
+    try {
+        const response = await axios.get(`${process.env.IPFS_API_URI}/download/${cid}`);
+        if (!response.data || !response.data.base64Data) throw new Error('No file data returned from IPFS.');
+
+        const encryptedData = Buffer.from(response.data.base64Data, 'base64');
+        const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(encKey, 'hex'), Buffer.from(iv, 'hex'));
+        let decryptedData = decipher.update(encryptedData);
+        decryptedData = Buffer.concat([decryptedData, decipher.final()]);
+
+        const fileName = `${fileId}.${extension}`;
+        const filePath = path.join(downloadsDir, fileName);
+        await fs.writeFile(filePath, decryptedData);
+        console.log(`File downloaded: ${filePath}`);
+
+        cache.set(fileId, filePath);
+        return filePath;
+    } catch (error) {
+        console.error('Error downloading file:', error);
+        throw error;
+    }
+}
+
+module.exports = { uploadFile, downloadFile, downloadFileWithCID };

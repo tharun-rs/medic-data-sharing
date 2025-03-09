@@ -44,7 +44,7 @@ class P2PNodeManager {
           return;
         }
 
-        const { encKey: aesKey, iv, cid } = fileRecord;
+        const { encKey: aesKey, iv, cid, extension } = fileRecord;
         
         const encryptedAesKey = crypto.publicEncrypt(
           requesterPublicKey,
@@ -66,6 +66,7 @@ class P2PNodeManager {
           aes_key: encryptedAesKey.toString('base64'),
           iv: encryptedIV.toString('base64'),
           cid: encryptedCid.toString('base64'),
+          extension,
           type: "response",
         });
       } catch (error) {
@@ -95,6 +96,7 @@ class P2PNodeManager {
             iv: decryptedIV,
             aesKey: decryptedAesKey,
             cid: decryptedCid,
+            extension: jsonData.extension,
           });
           this.pendingRequests.delete(jsonData.fileId);
         }

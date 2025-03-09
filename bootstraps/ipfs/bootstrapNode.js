@@ -8,10 +8,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const bootstrapUrlPath = path.join(__dirname,'/BOOTSTRAP_URL.txt');
-const keyPath = path.join(__dirname,'BOOTSTRAP_KEYS.json');
+
+const bootstrapUrlPath = './ipfs/BOOTSTRAP_URL.txt';
+const keyPath = './ipfsBOOTSTRAP_KEYS.json';
 
 
 const loadOrGenerateKey = async () => {
@@ -35,7 +34,7 @@ const loadOrGenerateKey = async () => {
 };
 
 
-const createBootstrapNode = async () => {
+export const createBootstrapNode = async () => {
     const privateKey = await loadOrGenerateKey();
     const node = await createLibp2p({
         addresses: {
@@ -76,7 +75,4 @@ const createBootstrapNode = async () => {
     return node;
 };
 
-createBootstrapNode().catch((err) => {
-    console.error("Error starting node: ", err);
-})
 

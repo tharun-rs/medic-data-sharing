@@ -1,11 +1,12 @@
 const express = require("express");
 const path = require("path");
 const fs = require('fs/promises');
-const { downloadFile } = require('../../ipfsConn/FileManager');
+const { downloadFile, downloadFileWithCID } = require('../../ipfsConn/FileManager');
 const { queryAuthorizationForPatient,
     queryAuthorizationForPatientByFileId,
     queryAuthorizationForAnonymousData
 } = require('../../peerAdapter/authorizationContracts');
+const p2pNodeManager = require('../../p2pComm/p2pNodeManager')
 
 const router = express.Router();
 
@@ -14,16 +15,25 @@ const router = express.Router();
  * Download Route
  * Expects fileId in the request body
  */
-router.post("/authorization/", async (req, res) => {
+router.post("/authorization/patientId", async (req, res) => {
     try {
         const { patientId, requestor } = req.body;
 
         const queryResult = await queryAuthorizationForPatient(patientId, requestor);
-        console.log(queryResult);
-
         const downloadDir = "/app/ipfsConn/downloads";
         const fileId = queryResult[0].file_id;
-        await downloadFile(fileId, downloadDir);
+
+        //file is owned by current organization
+        if (requestor === process.env.ORG_NAME) {
+            await downloadFile(fileId, downloadDir);
+
+            
+        } else { //file owned by some other organization
+            const addr = queryResult[0].custodian_address;
+            const { cid, aesKey, iv, extension } = await p2pNodeManager.sendRequest(addr, fileId);
+            await downloadFileWithCID( fileId, cid, aesKey, iv, extension);
+
+        }
 
         // Construct the file path
         const files = await fs.readdir(downloadDir);

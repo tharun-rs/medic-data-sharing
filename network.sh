@@ -1,9 +1,16 @@
 #!/bin/bash
 # a wrapper script around the fabric samples test network for our specific use case
 # Navigate to the testnetwork directory
-cd blockchain/test-network
+if [ "$1" == "restart" ] && [ "$2" == "edge" ]; then
+    docker rm -f edge-app1
+    docker rm -f edge-app2
+    docker rmi -f medic-data-sharing_edge-app1
+    docker rmi -f medic-data-sharing_edge-app2
+    docker-compose -f docker-compose.demo.yml up -d edge-app1
+    docker-compose -f docker-compose.demo.yml up -d edge-app2
 
-if [ "$1" == "up" ]; then
+elif [ "$1" == "up" ]; then
+    cd blockchain/test-network
     # start the network
     ./network.sh up
     # create default channel
@@ -16,6 +23,7 @@ if [ "$1" == "up" ]; then
     
 
 elif [ "$1" == "down" ]; then
+    cd blockchain/test-network
     #bring down the network
     ./network.sh down
 

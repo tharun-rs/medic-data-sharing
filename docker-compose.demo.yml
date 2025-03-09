@@ -23,18 +23,16 @@ services:
     networks:
       - test
 
-  bootstrap-node:
+  bootstrap:
     build:
-      context: ./ipfs # Path to your bootstrap node Dockerfile
-      dockerfile: Dockerfile.bootstrap
-    container_name: bootstrap-node
+      context: ./bootstraps # Path to your bootstrap node Dockerfile
+    container_name: bootstrap
     ports:
       - "4003:4003"  # Expose bootstrap node libp2p port
-    environment:
-      - BLOCKSTORE_PATH=/usr/src/app/data/blockstore
-      - DATASTORE_PATH=/usr/src/app/data/datastore
+      - "4001:4001"
     networks:
       - test
+
   edge-app1:
     build:
       context: ./edge-app
@@ -52,7 +50,10 @@ services:
       - ORG_ID_FOR_FOLDERS=org1
       - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
       - ORDERER_ADDRESS=orderer.example.com:7050
+      - BOOTSTRAP_NODE_IP=bootstrap
+      - PEER_PORT_NUMBER=7051
     depends_on:
+      - bootstrap
       - mongodb1
       - ipfs-node1
     networks:
@@ -66,7 +67,7 @@ services:
     container_name: edge-app2
     ports:
       - "3001:3000" # Expose Edge App API port
-      - "4005:4002" # Expose libp2p port
+      - "4004:4002" # Expose libp2p port
     environment:
       - PORT=3000
       - MONGO_URI=mongodb://mongodb1:27017  # Access mongodb2 by container name
@@ -75,9 +76,12 @@ services:
       - NODE_NO_WARNINGS=1
       - ORG_NAME=Org2
       - ORG_ID_FOR_FOLDERS=org2
-      - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
+      - CORE_PEER_ADDRESS=peer0.org2.example.com:7051
       - ORDERER_ADDRESS=orderer.example.com:7050
+      - BOOTSTRAP_NODE_IP=bootstrap
+      - PEER_PORT_NUMBER=9051
     depends_on:
+      - bootstrap
       - mongodb2
       - ipfs-node2
     networks:
@@ -91,15 +95,15 @@ services:
     container_name: ipfs-node1
     ports:
       - "3002:3001"  # Expose IPFS HTTP API port
-      - "4004:4004"  # Expose libp2p port
+      - "4005:4005"  # Expose libp2p port
     volumes:
       - ipfs1_data:/usr/src/app/data
     environment:
       - BLOCKSTORE_PATH=/usr/src/app/data/blockstore
       - DATASTORE_PATH=/usr/src/app/data/datastore
-      - BOOTSTRAP_NODE_IP=bootstrap-node  # Use the service name as the hostname
+      - BOOTSTRAP_NODE_IP=bootstrap  # Use the service name as the hostname
     depends_on:
-      - bootstrap-node
+      - bootstrap
     networks:
       - test
 
@@ -109,15 +113,15 @@ services:
     container_name: ipfs-node2
     ports:
       - "3003:3001"  # Expose IPFS HTTP API port with different host port
-      - "4006:4004"  # Expose libp2p port with different host port
+      - "4006:4005"  # Expose libp2p port with different host port
     volumes:
       - ipfs2_data:/usr/src/app/data
     environment:
       - BLOCKSTORE_PATH=/usr/src/app/data/blockstore
       - DATASTORE_PATH=/usr/src/app/data/datastore
-      - BOOTSTRAP_NODE_IP=bootstrap-node  # Use the service name as the hostname
+      - BOOTSTRAP_NODE_IP=bootstrap  # Use the service name as the hostname
     depends_on:
-      - bootstrap-node
+      - bootstrap
     networks:
       - test
 
