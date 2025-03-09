@@ -40,7 +40,7 @@ async function uploadAuthorization (file_id, patient_id, data_hash, data_custodi
  */
 async function queryAuthorizationForPatient (patientId, requestor){
     try {
-        const { gateway, contract } = await connectToNetwork('AuthorizationContract');
+        const { gateway, contract } = await connectToNetwork('auth');
         const result = await contract.evaluateTransaction('queryAuthorizationForPatient', patientId, requestor);
         gateway.disconnect();
         return JSON.parse(result.toString());
@@ -56,7 +56,7 @@ async function queryAuthorizationForPatient (patientId, requestor){
  */
 async function queryAuthorizationForPatientByFileId(fileId, requestor){
     try {
-        const { gateway, contract } = await connectToNetwork('AuthorizationContract');
+        const { gateway, contract } = await connectToNetwork('auth');
         const result = await contract.evaluateTransaction('queryAuthorizationForPatientByFileId', fileId, requestor);
         gateway.disconnect();
         return JSON.parse(result.toString());
@@ -71,7 +71,7 @@ async function queryAuthorizationForPatientByFileId(fileId, requestor){
  */
 async function queryAuthorizationForAnonymousData(requestor){
     try {
-        const { gateway, contract } = await connectToNetwork('AuthorizationContract');
+        const { gateway, contract } = await connectToNetwork('auth');
         const result = await contract.evaluateTransaction('queryAuthorizationForAnonymousData', requestor);
         gateway.disconnect();
         return JSON.parse(result.toString());

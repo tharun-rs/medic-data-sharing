@@ -114,7 +114,7 @@ async function downloadFile(fileId) {
         return filePath;
     } catch (error) {
         console.error('Error downloading file:', error);
-        throw new Error('Decryption error. Check key, IV, and encrypted data integrity.');
+        throw error;
     }
 }
 

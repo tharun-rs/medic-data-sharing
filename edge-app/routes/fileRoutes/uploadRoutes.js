@@ -20,8 +20,17 @@ async function getFileHash(filePath, algorithm = 'sha256') {
 
 const router = express.Router();
 
-// Set up multer for file uploads
-const upload = multer({ dest: "uploads/" });
+const storage = multer.diskStorage({
+    destination: "uploads/",
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        cb(null, `${file.fieldname}-${Date.now()}${ext}`);
+    },
+    limits: { fileSize: 100 * 1024 * 1024 },
+});
+
+const upload = multer({ storage });
+
 
 /**
  * Upload Route

@@ -3,7 +3,7 @@ const cors = require("cors");
 
 // Routes
 const fileUploadRouter = require('./routes/fileRoutes/uploadRoutes');
-
+const fileDownloadRouter = require('./routes/fileRoutes/downloadRoutes');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -11,10 +11,11 @@ const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors()); // Enable CORS
-app.use(express.json()); // Built-in JSON parser
-app.use(express.urlencoded({ extended: true })); // For URL-encoded data
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
 
 app.use("/fileHandler/upload", fileUploadRouter);
+app.use("/fileHandler/download", fileDownloadRouter);
 
 // Start the server
 app.listen(port, () => {

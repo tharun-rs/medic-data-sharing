@@ -1,44 +1,28 @@
 const express = require("express");
-const multer = require("multer");
 const path = require("path");
-const { uploadFile, downloadFile } = require('../../ipfsConn/FileManager');
+const fs = require('fs/promises');
+const { downloadFile } = require('../../ipfsConn/FileManager');
+const { queryAuthorizationForPatient,
+    queryAuthorizationForPatientByFileId,
+    queryAuthorizationForAnonymousData
+} = require('../../peerAdapter/authorizationContracts');
 
 const router = express.Router();
 
-// Set up multer for file uploads
-const upload = multer({ dest: "uploads/" });
-
-/**
- * Upload Route
- * Expects a file in the request
- */
-router.post("/upload/authorization", upload.single("file"), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ error: "No file uploaded" });
-        }
-
-        const filePath = req.file.path;
-        const fileId = await uploadFile(filePath);
-
-        res.json({ message: "File uploaded successfully", fileId });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
 
 /**
  * Download Route
  * Expects fileId in the request body
  */
-router.post("/download", async (req, res) => {
+router.post("/authorization/", async (req, res) => {
     try {
-        const { fileId } = req.body;
-        if (!fileId) {
-            return res.status(400).json({ error: "fileId is required" });
-        }
+        const { patientId, requestor } = req.body;
 
-        const downloadDir = path.join(__dirname, "../downloads");
+        const queryResult = await queryAuthorizationForPatient(patientId, requestor);
+        console.log(queryResult);
+
+        const downloadDir = "/app/ipfsConn/downloads";
+        const fileId = queryResult[0].file_id;
         await downloadFile(fileId, downloadDir);
 
         // Construct the file path
