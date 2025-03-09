@@ -6,6 +6,7 @@ const { uploadAuthorization } = require('../../peerAdapter/authorizationContract
 const p2pNodeManager = require('../../p2pComm/p2pNodeManager');
 const crypto = require('crypto');
 const fs = require('fs');
+const { uploadPIIRecord, uploadPHIRecord } = require("../../peerAdapter/dataUploadContracts");
 
 async function getFileHash(filePath, algorithm = 'sha256') {
     return new Promise((resolve, reject) => {
@@ -63,5 +64,61 @@ router.post("/authorization", upload.single("file"), async (req, res) => {
     }
 });
 
+
+router.post("/pii", upload.single("file"), async (req, res) => {
+    try {
+        
+        const { patientId } = req.body;
+        if (!req.file) {
+            return res.status(400).json({ error: "No file uploaded" });
+        }
+        const filePath = req.file.path;
+        
+        //get file hash
+        const fileHash = await getFileHash(filePath);
+
+        //upload file to ipfs
+        const fileId = await uploadFile(filePath);
+
+        //get node multiaddr
+        const nodeMultiAddr = p2pNodeManager.p2pNode.getMultiaddrs();
+
+        //create contract
+        const contract = await uploadPIIRecord(patientId, fileId, process.env.ORG_NAME, nodeMultiAddr, fileHash);
+        res.json({ message: "File uploaded successfully", fileId, contract });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+
+router.post("/phi", upload.single("file"), async (req, res) => {
+    try {
+        
+        const { patientId, fileType, fileTag } = req.body;
+        if (!req.file) {
+            return res.status(400).json({ error: "No file uploaded" });
+        }
+        const filePath = req.file.path;
+        
+        //get file hash
+        const fileHash = await getFileHash(filePath);
+
+        //upload file to ipfs
+        const fileId = await uploadFile(filePath);
+
+        //get node multiaddr
+        const nodeMultiAddr = p2pNodeManager.p2pNode.getMultiaddrs();
+
+        //create contract
+        const contract = await uploadPHIRecord(patientId, fileId, process.env.ORG_NAME, nodeMultiAddr, fileType, fileTag, fileHash);
+        res.json({ message: "File uploaded successfully", fileId, contract });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 module.exports = router;

@@ -8,13 +8,13 @@ class DataUploadContract extends Contract {
 
     async uploadPIIRecord(ctx, patient_id, file_id, data_custodian, custodian_address, data_hash, time_stamp) {
         const auth = await ctx.stub.invokeChaincode(
-            'AuthorizationContract', // Target contract name
+            'auth', // Target contract name
             ['queryAuthorizationForPatient', patient_id, data_custodian], // Function name and arguments
             ctx.stub.getChannelID() // Channel name (optional)
         );
 
         if (auth.status !== 200) {
-            throw new Error(`Failed to invoke AuthorizationContract: ${auth.message}`);
+            throw new Error(`Failed to invoke auth: ${auth.message}`);
         }
 
         // Convert payload to JSON
@@ -41,13 +41,13 @@ class DataUploadContract extends Contract {
 
     async uploadPHIRecord(ctx, patient_id, file_id, data_custodian, custodian_address, file_type, file_tag, data_hash, time_stamp) {
         const auth = await ctx.stub.invokeChaincode(
-            'AuthorizationContract',
+            'auth',
             ['queryAuthorizationForPatient', patient_id, data_custodian],
             ctx.stub.getChannelID()
         );
 
         if (auth.status !== 200) {
-            throw new Error(`Failed to invoke AuthorizationContract: ${auth.message}`);
+            throw new Error(`Failed to invoke auth: ${auth.message}`);
         }
 
         // Convert payload to JSON

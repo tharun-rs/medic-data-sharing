@@ -1,73 +1,75 @@
-const { connectToNetwork } = require('./connect');
+const connectToNetwork = require('./connect');
 
-async function uploadPIIRecord (patient_id, data_custodian, custodian_address, data_hash, time_stamp){
+async function uploadPIIRecord (patient_id, file_id, data_custodian, custodian_address, data_hash){
     try {
-        const { gateway, contract } = await connectToNetwork('DataUploadContract');
+        const { gateway, contract } = await connectToNetwork('data');
         const result = await contract.submitTransaction(
             'uploadPIIRecord',
             patient_id,
+            file_id,
             data_custodian,
             custodian_address,
             data_hash,
-            time_stamp
+            new Date().toISOString()
         );
         gateway.disconnect();
-        res.send({ success: true, message: 'PII record uploaded successfully.', result: result.toString() });
+        return result.toString();
     } catch (error) {
-        res.status(500).send({ success: false, message: `Failed to upload PII record: ${error}` });
+        throw error;
     }
 }
 
-async function uploadPHIRecord(patient_id, data_custodian, custodian_address, file_type, file_tag, data_hash, time_stamp){
+async function uploadPHIRecord(patient_id, file_id, data_custodian, custodian_address, file_type, file_tag, data_hash){
     try {
-        const { gateway, contract } = await connectToNetwork('DataUploadContract');
+        const { gateway, contract } = await connectToNetwork('data');
         const result = await contract.submitTransaction(
             'uploadPHIRecord',
             patient_id,
+            file_id,
             data_custodian,
             custodian_address,
             file_type,
             file_tag,
             data_hash,
-            time_stamp
+            new Date().toISOString()
         );
         gateway.disconnect();
-        res.send({ success: true, message: 'PHI record uploaded successfully.', result: result.toString() });
+        return result.toString();
     } catch (error) {
-        res.status(500).send({ success: false, message: `Failed to upload PHI record: ${error}` });
+        throw error;
     }
 }
 
 async function getAllPIIByPatientID(patientId) {
     try {
-        const { gateway, contract } = await connectToNetwork('DataUploadContract');
+        const { gateway, contract } = await connectToNetwork('data');
         const result = await contract.evaluateTransaction('getAllPIIByPatientID', patientId);
         gateway.disconnect();
-        res.send({ success: true, data: JSON.parse(result.toString()) });
+        return JSON.parse(result.toString());
     } catch (error) {
-        res.status(500).send({ success: false, message: `Failed to retrieve PII records: ${error}` });
+        throw error;
     }
 }
 
 async function getAllPHIByPatientID(patientId){
     try {
-        const { gateway, contract } = await connectToNetwork('DataUploadContract');
+        const { gateway, contract } = await connectToNetwork('data');
         const result = await contract.evaluateTransaction('getAllPHIByPatientID', patientId);
         gateway.disconnect();
-        res.send({ success: true, data: JSON.parse(result.toString()) });
+        return JSON.parse(result.toString());
     } catch (error) {
-        res.status(500).send({ success: false, message: `Failed to retrieve PHI records: ${error}` });
+        throw error;
     }
 }
 
 async function getAllPHIByFilters(file_type, file_tag, start_time, end_time){
     try {
-        const { gateway, contract } = await connectToNetwork('DataUploadContract');
+        const { gateway, contract } = await connectToNetwork('data');
         const result = await contract.evaluateTransaction('getAllPHIByFilters', file_type, file_tag, start_time, end_time);
         gateway.disconnect();
-        res.send({ success: true, data: JSON.parse(result.toString()) });
+        return JSON.parse(result.toString());
     } catch (error) {
-        res.status(500).send({ success: false, message: `Failed to retrieve PHI records: ${error}` });
+        throw error;
     }
 }
 
