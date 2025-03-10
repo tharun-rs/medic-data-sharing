@@ -309,6 +309,8 @@ services:
     build:
       context: ./frontend
     container_name: frontend1
+    environment:
+      - BASE_URL=edge-app1:3000
     ports:
       - "5000:3000"
     depends_on:
@@ -320,6 +322,8 @@ services:
     build:
       context: ./frontend
     container_name: frontend2
+    environment:
+      - BASE_URL=edge-app2:3000
     ports:
       - "5001:3000"
     depends_on:

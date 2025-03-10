@@ -25,11 +25,11 @@ function DownloadFiles() {
     e.preventDefault();
 
     const apiEndpoints = {
-      authorization: "/api/download/authorization/patientId",
-      pii: "/api/download/pii",
+      authorization: `${process.env.BASE_URL}/fileHandler/download/authorization/patientId`,
+      pii: `${process.env.BASE_URL}/fileHandler/download/pii`,
       phi: formData.anonymous
-        ? "/api/download/phi/anonymous"
-        : "/api/download/phi/regular",
+        ? `${process.env.BASE_URL}/fileHandler/download/phi/anonymous`
+        : `${process.env.BASE_URL}/fileHandler/download/phi/regular`,
     };
 
     const requestData = {

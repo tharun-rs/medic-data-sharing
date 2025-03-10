@@ -34,9 +34,9 @@ function UploadFiles() {
     }
 
     const apiEndpoints = {
-      authorization: "/api/upload/authorization",
-      phi: "/api/upload/phi",
-      pii: "/api/upload/pii"
+      authorization: `${process.env.BASE_URL}/fileHandler/upload/authorization`,
+      phi: `${process.env.BASE_URL}/fileHandler/upload/phi`,
+      pii: `${process.env.BASE_URL}/fileHandler/upload/pii`
     };
 
     const form = new FormData();
