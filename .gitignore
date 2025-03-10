@@ -3,3 +3,4 @@
 ipfs/blockstore/
 ipfs/datastore/
 architecture
+*.env

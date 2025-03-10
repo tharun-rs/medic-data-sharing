@@ -1,5 +1,5 @@
 # Use the official Node.js image as the base image
-FROM node:23-alpine
+FROM node:20-alpine
 
 # Install the required library
 RUN apk update && apk add --no-cache libc6-compat
@@ -11,7 +11,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # Install the dependencies defined in package.json
-RUN npm install
+RUN npm install --force
 
 # Copy the rest of the application files into the container
 COPY . .

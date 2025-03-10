@@ -1,0 +1,34 @@
+#!/bin/bash
+# a wrapper script around the fabric samples test network for our specific use case
+# Navigate to the testnetwork directory
+if [ "$1" == "restart" ] && [ "$2" == "edge" ]; then
+    docker rm -f edge-app1
+    docker rm -f edge-app2
+    docker rmi -f medic-data-sharing_edge-app1
+    docker rmi -f medic-data-sharing_edge-app2
+    docker-compose -f docker-compose.demo.yml up -d edge-app1
+    docker-compose -f docker-compose.demo.yml up -d edge-app2
+
+elif [ "$1" == "up" ]; then
+    cd blockchain/test-network
+    # start the network
+    ./network.sh up
+    # create default channel
+    ./network.sh createChannel
+    # deploy chaincodes to channel
+    ./network.sh deployCC -ccn auth -ccp ../chaincode/authorization-contract/ -ccl javascript
+    ./network.sh deployCC -ccn data -ccp ../chaincode/data-upload-contract/ -ccl javascript
+    ./network.sh deployCC -ccn phi -ccp ../chaincode/phi-access-request-contract/ -ccl javascript
+    ./network.sh deployCC -ccn pii -ccp ../chaincode/pii-access-request-contract/ -ccl javascript
+    
+
+elif [ "$1" == "down" ]; then
+    cd blockchain/test-network
+    #bring down the network
+    ./network.sh down
+
+
+else
+    echo "Usage: $0 {up|down}"
+    exit 1
+fi

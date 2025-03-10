@@ -6,7 +6,7 @@
 
 'use strict';
 
-const assetTransfer = require('./lib/assetTransfer');
+const phiAccessRequestContract = require('./lib/PHIaccess');
 
-module.exports.AssetTransfer = assetTransfer;
-module.exports.contracts = [assetTransfer];
+module.exports.PHIAccessRequestContract = phiAccessRequestContract;
+module.exports.contracts = [phiAccessRequestContract];

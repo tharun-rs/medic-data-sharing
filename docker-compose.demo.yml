@@ -9,6 +9,8 @@ services:
     volumes:
       - mongodb1_data:/data/db
     command: ["mongod", "--quiet", "--logpath", "/dev/null"]  # Suppress logs
+    networks:
+      - test
 
   mongodb2:
     image: mongo
@@ -18,17 +20,18 @@ services:
     volumes:
       - mongodb2_data:/data/db
     command: ["mongod", "--quiet", "--logpath", "/dev/null"]  # Suppress logs
+    networks:
+      - test
 
-  bootstrap-node:
+  bootstrap:
     build:
-      context: ./ipfs # Path to your bootstrap node Dockerfile
-      dockerfile: Dockerfile.bootstrap
-    container_name: bootstrap-node
+      context: ./bootstraps # Path to your bootstrap node Dockerfile
+    container_name: bootstrap
     ports:
       - "4003:4003"  # Expose bootstrap node libp2p port
-    environment:
-      - BLOCKSTORE_PATH=/usr/src/app/data/blockstore
-      - DATASTORE_PATH=/usr/src/app/data/datastore
+      - "4001:4001"
+    networks:
+      - test
 
   edge-app1:
     build:
@@ -43,9 +46,20 @@ services:
       - MONGO_DB_NAME=edgeApp
       - IPFS_API_URI=http://ipfs-node1:3001  # Access ipfs-node1 by container name
       - NODE_NO_WARNINGS=1
+      - ORG_NAME=Org1
+      - ORG_ID_FOR_FOLDERS=org1
+      - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
+      - ORDERER_ADDRESS=orderer.example.com:7050
+      - BOOTSTRAP_NODE_IP=bootstrap
+      - PEER_PORT_NUMBER=7051
     depends_on:
+      - bootstrap
       - mongodb1
       - ipfs-node1
+    networks:
+      - test
+    volumes:
+      - /home/tharunrs/medic-data-sharing/blockchain/test-network/organizations/peerOrganizations/org1.example.com:/etc/hyperledger/fabric
 
   edge-app2:
     build:
@@ -53,16 +67,27 @@ services:
     container_name: edge-app2
     ports:
       - "3001:3000" # Expose Edge App API port
-      - "4005:4002" # Expose libp2p port
+      - "4004:4002" # Expose libp2p port
     environment:
       - PORT=3000
       - MONGO_URI=mongodb://mongodb1:27017  # Access mongodb2 by container name
       - MONGO_DB_NAME=edgeApp
       - IPFS_API_URI=http://ipfs-node1:3001  # Access ipfs-node2 by container name
       - NODE_NO_WARNINGS=1
+      - ORG_NAME=Org2
+      - ORG_ID_FOR_FOLDERS=org2
+      - CORE_PEER_ADDRESS=peer0.org2.example.com:7051
+      - ORDERER_ADDRESS=orderer.example.com:7050
+      - BOOTSTRAP_NODE_IP=bootstrap
+      - PEER_PORT_NUMBER=9051
     depends_on:
+      - bootstrap
       - mongodb2
       - ipfs-node2
+    networks:
+      - test
+    volumes:
+      - /home/tharunrs/medic-data-sharing/blockchain/test-network/organizations/peerOrganizations/org2.example.com:/etc/hyperledger/fabric
 
   ipfs-node1:
     build:
@@ -70,15 +95,17 @@ services:
     container_name: ipfs-node1
     ports:
       - "3002:3001"  # Expose IPFS HTTP API port
-      - "4004:4004"  # Expose libp2p port
+      - "4005:4005"  # Expose libp2p port
     volumes:
       - ipfs1_data:/usr/src/app/data
     environment:
       - BLOCKSTORE_PATH=/usr/src/app/data/blockstore
       - DATASTORE_PATH=/usr/src/app/data/datastore
-      - BOOTSTRAP_NODE_IP=bootstrap-node  # Use the service name as the hostname
+      - BOOTSTRAP_NODE_IP=bootstrap  # Use the service name as the hostname
     depends_on:
-      - bootstrap-node
+      - bootstrap
+    networks:
+      - test
 
   ipfs-node2:
     build:
@@ -86,18 +113,207 @@ services:
     container_name: ipfs-node2
     ports:
       - "3003:3001"  # Expose IPFS HTTP API port with different host port
-      - "4006:4004"  # Expose libp2p port with different host port
+      - "4006:4005"  # Expose libp2p port with different host port
     volumes:
       - ipfs2_data:/usr/src/app/data
     environment:
       - BLOCKSTORE_PATH=/usr/src/app/data/blockstore
       - DATASTORE_PATH=/usr/src/app/data/datastore
-      - BOOTSTRAP_NODE_IP=bootstrap-node  # Use the service name as the hostname
+      - BOOTSTRAP_NODE_IP=bootstrap  # Use the service name as the hostname
     depends_on:
-      - bootstrap-node
+      - bootstrap
+    networks:
+      - test
+
+  orderer.example.com:
+    container_name: orderer.example.com
+    image: hyperledger/fabric-orderer:latest
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      # enabled TLS
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_CLUSTER_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_BOOTSTRAPMETHOD=none
+      - ORDERER_CHANNELPARTICIPATION_ENABLED=true
+      - ORDERER_ADMIN_TLS_ENABLED=true
+      - ORDERER_ADMIN_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_ADMIN_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_ADMIN_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_TLS_CLIENTROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_LISTENADDRESS=0.0.0.0:7053
+      - ORDERER_OPERATIONS_LISTENADDRESS=orderer.example.com:9443
+      - ORDERER_METRICS_PROVIDER=prometheus
+    working_dir: /root
+    command: orderer
+    volumes:
+        - ./blockchain/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp:/var/hyperledger/orderer/msp
+        - ./blockchain/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/:/var/hyperledger/orderer/tls
+        - orderer.example.com:/var/hyperledger/production/orderer
+    ports:
+      - 7050:7050
+      - 7053:7053
+      - 9443:9443
+    networks:
+      - test
+
+  peer0.org1.example.com:
+    container_name: peer0.org1.example.com
+    image: hyperledger/fabric-peer:latest
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+      - FABRIC_LOGGING_SPEC=INFO
+      #- FABRIC_LOGGING_SPEC=DEBUG
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      # Peer specific variables
+      - CORE_PEER_ID=peer0.org1.example.com
+      - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.org1.example.com:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.example.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org1.example.com:7051
+      - CORE_PEER_LOCALMSPID=Org1MSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_OPERATIONS_LISTENADDRESS=peer0.org1.example.com:9444
+      - CORE_METRICS_PROVIDER=prometheus
+      - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org1"}
+      - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=fabric_test
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0:5984
+      # The CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME and CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD
+      # provide the credentials for ledger to connect to CouchDB.  The username and password must
+      # match the username and password set for the associated CouchDB.
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
+    depends_on:
+      - couchdb0
+    volumes:
+      - ./blockchain/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com:/etc/hyperledger/fabric
+      - peer0.org1.example.com:/var/hyperledger/production
+      - ./blockchain/test-network/compose/docker/peercfg:/etc/hyperledger/peercfg
+      - ${DOCKER_SOCK}:/host/var/run/docker.sock
+    working_dir: /root
+    command: peer node start
+    ports:
+      - 7051:7051
+      - 9444:9444
+    networks:
+      - test
+
+  peer0.org2.example.com:
+    container_name: peer0.org2.example.com
+    image: hyperledger/fabric-peer:latest
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+      - FABRIC_LOGGING_SPEC=INFO
+      #- FABRIC_LOGGING_SPEC=DEBUG
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      # Peer specific variables
+      - CORE_PEER_ID=peer0.org2.example.com
+      - CORE_PEER_ADDRESS=peer0.org2.example.com:9051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:9051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.org2.example.com:9052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org2.example.com:9051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.example.com:9051
+      - CORE_PEER_LOCALMSPID=Org2MSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_OPERATIONS_LISTENADDRESS=peer0.org2.example.com:9445
+      - CORE_METRICS_PROVIDER=prometheus
+      - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org2"}
+      - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=fabric_test
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb1:5984
+      # The CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME and CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD
+      # provide the credentials for ledger to connect to CouchDB.  The username and password must
+      # match the username and password set for the associated CouchDB.
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
+    depends_on:
+      - couchdb1
+    volumes:
+      - ./blockchain/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com:/etc/hyperledger/fabric
+      - peer0.org2.example.com:/var/hyperledger/production
+      - ./blockchain/test-network/compose/docker/peercfg:/etc/hyperledger/peercfg
+      - ${DOCKER_SOCK}:/host/var/run/docker.sock
+    working_dir: /root
+    command: peer node start
+    ports:
+      - 9051:9051
+      - 9445:9445
+    networks:
+      - test
+
+  couchdb0:
+    container_name: couchdb0
+    image: couchdb:3.3.3
+    labels:
+      service: hyperledger-fabric
+    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
+    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=adminpw
+    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
+    # for example map it to utilize Fauxton User Interface in dev environments.
+    ports:
+      - "5984:5984"
+    networks:
+      - test
+
+  couchdb1:
+    container_name: couchdb1
+    image: couchdb:3.3.3
+    labels:
+      service: hyperledger-fabric
+    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
+    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=adminpw
+    # Comment/Uncomment the port mapping if you want to hide/expose the CouchDB service,
+    # for example map it to utilize Fauxton User Interface in dev environments.
+    ports:
+      - "7984:5984"
+    networks:
+      - test
 
 volumes:
   mongodb1_data:
   mongodb2_data:
   ipfs1_data:
   ipfs2_data:
+  orderer.example.com:
+  peer0.org1.example.com:
+  peer0.org2.example.com:
+
+networks:
+  test:
+    name: fabric_test

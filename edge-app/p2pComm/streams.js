@@ -1,12 +1,26 @@
 /* eslint-disable no-console */
 
-import * as lp from 'it-length-prefixed'
-import map from 'it-map'
-import { pipe } from 'it-pipe'
-import { fromString as uint8ArrayFromString } from 'uint8arrays/from-string'
-import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
+let lp, map, pipe, uint8ArrayFromString, uint8ArrayToString;
 
-export async function jsonToStream(jsonData, stream) {
+async function loadDependencies() {
+    const lpModule = await import('it-length-prefixed');
+    lp = lpModule.default || lpModule;  // Ensure both CommonJS & ES Module compatibility
+
+    ({ default: map } = await import('it-map'));
+    ({ pipe } = await import('it-pipe'));
+    ({ fromString: uint8ArrayFromString } = await import('uint8arrays/from-string'));
+    ({ toString: uint8ArrayToString } = await import('uint8arrays/to-string'));
+}
+
+
+const init = (async () => {
+    console.log("init call received");
+    await loadDependencies();
+    console.log('dependencies loaded');
+    console.log('lp:', lp);
+})();
+
+async function jsonToStream(jsonData, stream) {
     const jsonString = JSON.stringify(jsonData);
     const jsonBuffer = uint8ArrayFromString(jsonString);
 
@@ -20,7 +34,7 @@ export async function jsonToStream(jsonData, stream) {
     );
 }
 
-export async function streamToJSON(stream) {
+async function streamToJSON(stream) {
     let jsonData;
     await pipe(
         // Read from the stream source
@@ -29,7 +43,7 @@ export async function streamToJSON(stream) {
         (source) => lp.decode(source),
         // Turn buffers into strings
         (source) => map(source, (buf) => uint8ArrayToString(buf.subarray())),
-        async function (source){
+        async function (source) {
             for await (const msg of source) {
                 try {
                     jsonData = JSON.parse(msg);
@@ -42,3 +56,4 @@ export async function streamToJSON(stream) {
     return jsonData;
 }
 
+module.exports = { jsonToStream, streamToJSON };

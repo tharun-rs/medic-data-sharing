@@ -1,11 +1,21 @@
-import { createLibp2p } from 'libp2p';
-import { tcp } from '@libp2p/tcp';
-import { noise } from '@chainsafe/libp2p-noise';
-import { yamux } from '@chainsafe/libp2p-yamux';
-import { multiaddr } from '@multiformats/multiaddr';
-import { bootstrap } from '@libp2p/bootstrap';
-import { kadDHT } from '@libp2p/kad-dht';
-import { jsonToStream, streamToJSON } from './streams.js';
+let createLibp2p, tcp, noise, yamux, multiaddr, bootstrap, kadDHT, jsonToStream, streamToJSON;
+
+async function loadDependencies() {
+  ({ createLibp2p } = await import('libp2p'));
+  ({ tcp } = await import('@libp2p/tcp'));
+  ({ noise } = await import('@chainsafe/libp2p-noise'));
+  ({ yamux } = await import('@chainsafe/libp2p-yamux'));
+  ({ multiaddr } = await import('@multiformats/multiaddr'));
+  ({ bootstrap } = await import('@libp2p/bootstrap'));
+  ({ kadDHT } = await import('@libp2p/kad-dht'));
+  ({ jsonToStream, streamToJSON } = await import('./streams.js'));
+}
+
+// Call the function to load dependencies
+loadDependencies().catch((err) => {
+  console.error('Failed to load dependencies:', err);
+  process.exit(1);
+});
 
 const protocol = '/json-exchange/1.0.0';
 
@@ -18,7 +28,7 @@ class P2PNode {
    * Initializes the Libp2p node with bootstrap addresses and configuration
    */
   async initialize() {
-  
+    await loadDependencies();
     this.node = await createLibp2p({
       addresses: { listen: ['/ip4/0.0.0.0/tcp/4002'] },
       transports: [tcp()],
@@ -37,7 +47,7 @@ class P2PNode {
         },
       }),
     });
-  
+
     await this.node.start(); // Start the node
     console.log('Node is running at:', this.node.getMultiaddrs().map((addr) => addr.toString()));
   }
@@ -78,12 +88,11 @@ class P2PNode {
   }
 
   /**
-   * 
-   * @returns {Multiaddr[]} list of multiaddresses for the given node
+   * @returns {Multiaddr} Returns multiaddr as a string
    */
   getMultiaddrs() {
     if (!this.node) {
-      this.initialize().then( () => {
+      this.initialize().then(() => {
         const addresses = this.node.getMultiaddrs().map((addr) => addr.toString());
         return addresses[addresses.length - 1];
       });
@@ -93,4 +102,4 @@ class P2PNode {
   }
 }
 
-export default P2PNode;
+module.exports = P2PNode;

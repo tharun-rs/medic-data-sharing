@@ -1,7 +1,7 @@
-import fs from 'fs/promises';
-import path from 'path';
-import { uploadFile, downloadFile } from './FileManager.js';
-import { getIPFSKeysCollection } from '../database/models.js';
+const fs = require('fs/promises');
+const path = require('path');
+const { uploadFile, downloadFile } = require('./FileManager');
+const { getIPFSKeysCollection } = require('../database/models');
 
 // Directory setup for testing
 const testFilePath = './testfile.txt';

@@ -6,7 +6,7 @@
 
 'use strict';
 
-const assetTransfer = require('./lib/assetTransfer');
+const piiAccessContract = require('./lib/PIIaccess');
 
-module.exports.AssetTransfer = assetTransfer;
-module.exports.contracts = [assetTransfer];
+module.exports.PIIAccessContract = piiAccessContract;
+module.exports.contracts = [piiAccessContract];

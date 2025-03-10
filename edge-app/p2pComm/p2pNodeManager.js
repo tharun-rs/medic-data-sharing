@@ -1,13 +1,11 @@
-import { getIPFSKeysCollection } from '../database/models.js';
-import crypto from 'crypto';
-import P2PNode from './p2pNode.js';
+const { getIPFSKeysCollection } = require('../database/models');
+const crypto = require('crypto');
+const P2PNode = require('./p2pNode');
 
-class p2pNodeManager {
+class P2PNodeManager {
   constructor() {
-    // Create a new P2PNode instance
     this.p2pNode = null;
 
-    //generate rsa key
     // Generate RSA key pair
     const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
       modulusLength: 2048,
@@ -27,39 +25,35 @@ class p2pNodeManager {
   }
 
   async initialize() {
-    this.p2pNode = await new P2PNode();
+    this.p2pNode = new P2PNode();
     await this.p2pNode.initialize();
     await this.p2pNode.setNodeListener(this.sendResponse.bind(this));
   }
 
-  /**
-   * Method to handle incoming JSON data
-   * This will be called whenever a message is received by the P2PNode.
-   * @param {JSON} jsonData The incoming JSON data
-   */
   async sendResponse(jsonData) {
     const type = jsonData.type;
 
     if (type === "request") {
       const { fileId, rsa_key: requesterPublicKey } = jsonData;
-
       try {
-        // Fetch the document from the database using fileId
-        const ipfs_collection = await getIPFSKeysCollection()
-        const fileRecord = await ipfs_collection.findOne({ fileId });
+        const ipfsCollection = await getIPFSKeysCollection();
+        const fileRecord = await ipfsCollection.findOne({ fileId });
 
         if (!fileRecord) {
           console.error(`File with ID ${fileId} not found.`);
           return;
         }
 
-        const { aesKey, cid } = fileRecord;
-
-        //console.log(aesKey);
-        // Encrypt the AES key and CID using the requester's public RSA key
+        const { encKey: aesKey, iv, cid, extension } = fileRecord;
+        
         const encryptedAesKey = crypto.publicEncrypt(
           requesterPublicKey,
           Buffer.from(aesKey, 'utf-8')
+        );
+
+        const encryptedIV = crypto.publicEncrypt(
+          requesterPublicKey,
+          Buffer.from(iv, 'utf-8')
         );
 
         const encryptedCid = crypto.publicEncrypt(
@@ -67,11 +61,12 @@ class p2pNodeManager {
           Buffer.from(cid, 'utf-8')
         );
 
-        // Send the encrypted response back to the requester
         this.p2pNode.sendToNode(jsonData.address, {
           fileId,
           aes_key: encryptedAesKey.toString('base64'),
+          iv: encryptedIV.toString('base64'),
           cid: encryptedCid.toString('base64'),
+          extension,
           type: "response",
         });
       } catch (error) {
@@ -81,10 +76,14 @@ class p2pNodeManager {
 
     if (type === "response") {
       try {
-        // Decrypt the CID and AES key using the private RSA key
         const decryptedAesKey = crypto.privateDecrypt(
           this.rsaPrivateKey,
           Buffer.from(jsonData.aes_key, 'base64')
+        ).toString('utf-8');
+
+        const decryptedIV = crypto.privateDecrypt(
+          this.rsaPrivateKey,
+          Buffer.from(jsonData.iv, 'base64')
         ).toString('utf-8');
 
         const decryptedCid = crypto.privateDecrypt(
@@ -92,21 +91,20 @@ class p2pNodeManager {
           Buffer.from(jsonData.cid, 'base64')
         ).toString('utf-8');
 
-        // todo : make IPFS call using decryptedCid and decryptedAesKey
-        // Notify waiting Promises for the fileId
         if (this.pendingRequests.has(jsonData.fileId)) {
-          this.pendingRequests.get(jsonData.fileId).resolve({ 
-            aesKey: decryptedAesKey, 
-            cid: decryptedCid 
+          this.pendingRequests.get(jsonData.fileId).resolve({
+            iv: decryptedIV,
+            aesKey: decryptedAesKey,
+            cid: decryptedCid,
+            extension: jsonData.extension,
           });
           this.pendingRequests.delete(jsonData.fileId);
         }
-
       } catch (error) {
         console.error("Error decrypting response data:", error);
         if (this.pendingRequests.has(jsonData.fileId)) {
-          this.pendingRequests.get(jsonData.fileId).reject({ 
-            message: error
+          this.pendingRequests.get(jsonData.fileId).reject({
+            message: error,
           });
           this.pendingRequests.delete(jsonData.fileId);
         }
@@ -114,12 +112,6 @@ class p2pNodeManager {
     }
   }
 
-  /**
-   * Sends a request to another peer
-   * @param {String} receiverAddr Multiaddress of the peer to send the request to
-   * @param {String} fileId FileID of the file to be requested
-   * @returns {Promise} promise of the requested fileId
-   */
   async sendRequest(receiverAddr, fileId) {
     const requestPromise = new Promise((resolve, reject) => {
       this.pendingRequests.set(fileId, { resolve, reject });
@@ -134,7 +126,15 @@ class p2pNodeManager {
 
     return requestPromise;
   }
-
 }
 
-export default p2pNodeManager;
+const p2pNodeManager = new P2PNodeManager();
+(async () => {
+    try {
+        await p2pNodeManager.initialize();
+        console.log("P2P Node is ready to handle requests.");
+    } catch (error) {
+        console.error("Failed to initialize P2P Node:", error);
+    }
+})();
+module.exports = p2pNodeManager;
