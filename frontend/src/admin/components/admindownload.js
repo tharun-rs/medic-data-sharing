@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Radio } from "antd";
 
 function DownloadFiles() {
-  const [section, setSection] = useState("");
+  const [section, setSection] = useState("pii");
   const [formData, setFormData] = useState({
     patientId: "",
     requestor: "",
@@ -84,8 +84,8 @@ function DownloadFiles() {
     <div className="download-container">
       <h2>Download Files</h2>
       <div className="buttonPanel">
-        <button className="uploadButton" onClick={() => setSection("authorization")}>Authorization Files</button>
         <button className="uploadButton" onClick={() => setSection("pii")}>PII Files</button>
+        <button className="uploadButton" onClick={() => setSection("authorization")}>Authorization Files</button>
         <button className="uploadButton" onClick={() => setSection("phi")}>PHI Files</button>
       </div>
 

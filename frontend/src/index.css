@@ -176,6 +176,10 @@ code {
 }
 
 /*upload function styling*/
+.upload-container, .download-container{
+  margin-left: 50px;
+}
+
 .upload-container > h2{
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color:rgb(27, 27, 27);

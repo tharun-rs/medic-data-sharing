@@ -3,7 +3,7 @@ import '../../index.css';
 import {Checkbox, Input} from 'antd';
 
 function UploadFiles() {
-  const [section, setSection] = useState("");
+  const [section, setSection] = useState("pii");
   const [file, setFile] = useState(null);
   const [formData, setFormData] = useState({
     patientId: "",
@@ -68,11 +68,11 @@ function UploadFiles() {
 
   return (
     <div className="upload-container">
-      <h2>Choose Files to Upload</h2>
+      <h2>Upload Files</h2>
       <div className="buttonPanel">
-        <button className="uploadButton" onClick={() => setSection("phi")}>PHI Files</button>
-        <button className="uploadButton" onClick={() => setSection("authorization")}>Authorization Files</button>
         <button className="uploadButton" onClick={() => setSection("pii")}>PII Files</button>
+        <button className="uploadButton" onClick={() => setSection("authorization")}>Authorization Files</button>
+        <button className="uploadButton" onClick={() => setSection("phi")}>PHI Files</button>
       </div>
 
 
