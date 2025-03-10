@@ -145,7 +145,7 @@ code {
   background-color: rgb(82, 138, 152);
   color: rgb(215, 215, 215);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   margin-top: 15px;
   padding: 15px 40px 15px 40px;
   text-align: center;
@@ -172,6 +172,89 @@ code {
 
 .content{
   margin-left: 1%;
+  width: 100%;
+}
+
+/*upload function styling*/
+.upload-container > h2{
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color:rgb(27, 27, 27);
+}
+
+.buttonPanel{
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+.uploadButton{
+  background-color: white;
+  color:  rgb(29, 61, 69);
+  font-family: fantasy;
+  font-weight: lighter;
+  letter-spacing: 1px;
+  font-size: 18px;
+  padding: 3%;
+  border: none;
+  border-radius: 20px;
+  box-shadow: 2px 2px 5px grey;
+}
+
+.formSection{
+  display: flex;
+  flex-direction: column;
+}
+
+.formSection > input{
+  max-width: fit-content;
+  margin: 7px;
+  font-family: 'Courier New', Courier, monospace;
+  border: none;
+  border-radius: 5px;
+  box-shadow: 1px 1px 5px grey;
+  padding: 5px;
+}
+
+.formSection > input:focus{
+  outline: none;
+}
+
+.formSection > button{
+  max-width: fit-content;
+  align-self: center;
+  background-color: rgb(38, 99, 114);
+  border: none;
+  padding: 12px;
+  border-radius: 5px;
+  box-shadow: 1px 1px 5px grey;
+  color: white;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+}
+
+.formSection > button:hover{
+  scale: 1.05;
+  box-shadow: 2px 2px 10px rgb(59, 59, 59);;
+}
+
+.formSection > h3{
+  color:rgb(27, 27, 27);
+}
+
+.readAccess, .writeAccess, .anonymousPHIAccess{
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  margin: 1px;
+  color: rgb(27, 27, 27);
+  margin-left: 2%;
+}
+
+.file{
+  background-color: white;
+  max-width: fit-content;
+  padding: 2%;
+  border-radius: 5px;
+  box-shadow: 2px 2px 5px grey;
 }
 
 /*footer styling*/

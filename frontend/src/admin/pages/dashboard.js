@@ -5,7 +5,7 @@ import DownloadFiles from '../components/admindownload';
 import '../../index.css';
 
 function AdminDashboard() {
-  const [selectedComponent, setSelectedComponent] = useState(null);
+  const [selectedComponent, setSelectedComponent] = useState(<CreateUser />);
 
   return (
     <div className="dashboard-container">
