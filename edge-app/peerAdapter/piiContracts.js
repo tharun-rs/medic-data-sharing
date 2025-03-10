@@ -1,30 +1,33 @@
-const { connectToNetwork } = require('./connect');
+const connectToNetwork = require('./connect');
 
-async function createPIIAccessRequestWithFileID(file_id, data_custodian, requestor, requestor_address){
+async function createPIIAccessRequestWithFileID(patient_id, file_id, data_custodian, requestor, requestor_address){
     try {
-        const { gateway, contract } = await connectToNetwork('PIIAccessContract');
+        console.log("file: ",file_id);
+        const { gateway, contract } = await connectToNetwork('pii');
         const result = await contract.submitTransaction(
             'createAccessRequestWithFileID',
+            patient_id,
             file_id,
             data_custodian,
             requestor,
-            requestor_address
+            requestor_address,
+            new Date().toISOString(),
         );
         gateway.disconnect();
-        res.send({ success: true, message: 'PII access request created successfully.', result: result.toString() });
+        return result.toString();
     } catch (error) {
-        res.status(500).send({ success: false, message: `Failed to create PII access request: ${error}` });
+        throw error;
     }
 }
 
 async function queryPIIAccessRequestsByFileID(fileId){
     try {
-        const { gateway, contract } = await connectToNetwork('PIIAccessContract');
+        const { gateway, contract } = await connectToNetwork('pii');
         const result = await contract.evaluateTransaction('queryAccessRequestsByFileID', fileId);
         gateway.disconnect();
-        res.send({ success: true, data: JSON.parse(result.toString()) });
+        return JSON.parse(result.toString());
     } catch (error) {
-        res.status(500).send({ success: false, message: `Failed to query PII access requests: ${error}` });
+        throw error;
     }
 }
 
