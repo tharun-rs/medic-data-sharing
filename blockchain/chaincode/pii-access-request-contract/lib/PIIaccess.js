@@ -6,10 +6,10 @@ const sortKeysRecursive = require('sort-keys-recursive');
 
 class PIIAccessContract extends Contract {
 
-    async createAccessRequestWithFileID(ctx, file_id, data_custodian, requestor, requestor_address, time_stamp) {
+    async createAccessRequestWithFileID(ctx, patient_id, file_id, data_custodian, requestor, requestor_address, time_stamp) {
 
         const auth = await ctx.stub.invokeChaincode(
-            'AuthorizationContract', // Target contract name
+            'auth', // Target contract name
             ['queryAuthorizationForPatient', patient_id, requestor], // Function name and arguments
             ctx.stub.getChannelID()
         );
@@ -21,8 +21,8 @@ class PIIAccessContract extends Contract {
         // Convert payload to JSON
         const authPayload = JSON.parse(auth.payload.toString());
 
-        // Check if the response is empty or if write_access is false in any entry
-        if (!authPayload.length || authPayload.some(record => !record.Record.read_access)) {
+        // Check if the response is empty or if read_access is false in any entry
+        if (!authPayload.length || authPayload.some(record => !record.read_access)) {
             throw new Error(`Authorization denied for data custodian: ${data_custodian}`);
         }
 

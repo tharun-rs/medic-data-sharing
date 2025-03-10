@@ -1,6 +1,9 @@
 const { getIPFSKeysCollection } = require('../database/models');
 const crypto = require('crypto');
 const P2PNode = require('./p2pNode');
+const { getAllPIIByPatientID } = require('../peerAdapter/dataUploadContracts');
+const { queryPIIAccessRequestsByFileID } = require('../peerAdapter/piiContracts');
+const { error } = require('console');
 
 class P2PNodeManager {
   constructor() {
@@ -30,12 +33,27 @@ class P2PNodeManager {
     await this.p2pNode.setNodeListener(this.sendResponse.bind(this));
   }
 
+  async verifyPIIAcessRequest(requestor, fileId) {
+
+  }
+
   async sendResponse(jsonData) {
     const type = jsonData.type;
 
     if (type === "request") {
-      const { fileId, rsa_key: requesterPublicKey } = jsonData;
+      const { fileId, rsa_key: requesterPublicKey, fileType, requestor } = jsonData;
+      let requestor_address;
+      requestor_address = jsonData.address;
       try {
+        if (fileType === "pii") {
+          const response = await queryPIIAccessRequestsByFileID(fileId);
+          const matchedRecord = response.find(record => record.requestor === requestor);
+          if(matchedRecord){
+            requestor_address = matchedRecord.requestor_address;
+          } else {
+            throw Error("Access not available");
+          }
+        }
         const ipfsCollection = await getIPFSKeysCollection();
         const fileRecord = await ipfsCollection.findOne({ fileId });
 
@@ -45,7 +63,7 @@ class P2PNodeManager {
         }
 
         const { encKey: aesKey, iv, cid, extension } = fileRecord;
-        
+
         const encryptedAesKey = crypto.publicEncrypt(
           requesterPublicKey,
           Buffer.from(aesKey, 'utf-8')
@@ -61,7 +79,7 @@ class P2PNodeManager {
           Buffer.from(cid, 'utf-8')
         );
 
-        this.p2pNode.sendToNode(jsonData.address, {
+        this.p2pNode.sendToNode(requestor_address, {
           fileId,
           aes_key: encryptedAesKey.toString('base64'),
           iv: encryptedIV.toString('base64'),
@@ -71,11 +89,17 @@ class P2PNodeManager {
         });
       } catch (error) {
         console.error(`Error handling request for fileId ${fileId}:`, error);
+        this.p2pNode.sendToNode(requestor_address, {
+          error
+        });
       }
     }
 
     if (type === "response") {
       try {
+        if (jsonData.error) {
+          throw error;
+        }
         const decryptedAesKey = crypto.privateDecrypt(
           this.rsaPrivateKey,
           Buffer.from(jsonData.aes_key, 'base64')
@@ -112,7 +136,7 @@ class P2PNodeManager {
     }
   }
 
-  async sendRequest(receiverAddr, fileId) {
+  async sendRequest(receiverAddr, fileId, fileType = "auth", requestor = "") {
     const requestPromise = new Promise((resolve, reject) => {
       this.pendingRequests.set(fileId, { resolve, reject });
     });
@@ -121,6 +145,8 @@ class P2PNodeManager {
       fileId: fileId,
       address: this.p2pNode.getMultiaddrs(),
       rsa_key: this.rsaPublicKey,
+      fileType,
+      requestor,
       type: "request",
     });
 
@@ -130,11 +156,11 @@ class P2PNodeManager {
 
 const p2pNodeManager = new P2PNodeManager();
 (async () => {
-    try {
-        await p2pNodeManager.initialize();
-        console.log("P2P Node is ready to handle requests.");
-    } catch (error) {
-        console.error("Failed to initialize P2P Node:", error);
-    }
+  try {
+    await p2pNodeManager.initialize();
+    console.log("P2P Node is ready to handle requests.");
+  } catch (error) {
+    console.error("Failed to initialize P2P Node:", error);
+  }
 })();
 module.exports = p2pNodeManager;
