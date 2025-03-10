@@ -4,14 +4,16 @@ import { Link } from 'react-router-dom';
 
 function UserLogin() {
   return (
+    <div className="login-body">
     <div className="login-container">
-      <h2>User Login</h2>
-      <form>
+      <form className="loginform">
+        <h2>USER LOGIN</h2>
         <input type="text" placeholder="Username" required />
         <input type="password" placeholder="Password" required />
-        <Link to="/forgot-password">Forgot Password?</Link>
-        <button type="submit">Login</button>
+        <Link to="/forgot-password" className="Link">Forgot Password?</Link>
+        <button type="submit">login</button>
       </form>
+    </div>
     </div>
   );
 }

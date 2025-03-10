@@ -1,11 +1,11 @@
 import React from 'react';
-//import './Footer.css';
+import '../index.css';
 
 function UserFooter() {
   return (
     <footer className="footer">
-      <p>&copy; 2025 MedMe. All rights reserved.</p>
       <p>Contact: support@medme.com</p>
+      <p>&copy; 2025 MedMe. All rights reserved.</p>
     </footer>
   );
 }

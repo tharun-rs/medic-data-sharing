@@ -1,15 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-//import './Navbar.css';
+import '../../index.css';
+import logout from '../../assets/logout.png';
+import logo from '../../assets/medic-logo.png';
 
 function AdminNavbar() {
   return (
     <nav className="navbar">
-      <div className="logo-title">
-        <img src="/logo.png" alt="MedMe Logo" className="logo" />
-        <h1>MedMe</h1>
-      </div>
-      <Link to="/logout" className="logout">Logout</Link>
+      <div><img src={logo} className="logo" /></div>
+      <div className="title">MedMe</div>
+      <div><Link to="/logout"><img src={logout}  className="logout"></img></Link></div>
     </nav>
   );
 }

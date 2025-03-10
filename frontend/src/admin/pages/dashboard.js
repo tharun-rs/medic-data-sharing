@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import CreateUser from '../components/createuser';
 import UploadFiles from '../components/adminupload';
 import DownloadFiles from '../components/admindownload';
-//import './Dashboard.css';
+import '../../index.css';
 
 function AdminDashboard() {
   const [selectedComponent, setSelectedComponent] = useState(null);
@@ -10,9 +10,11 @@ function AdminDashboard() {
   return (
     <div className="dashboard-container">
       <div className="sidebar">
-        <button onClick={() => setSelectedComponent(<CreateUser />)}>Create New User</button>
-        <button onClick={() => setSelectedComponent(<UploadFiles />)}>Upload Files</button>
-        <button onClick={() => setSelectedComponent(<DownloadFiles />)}>Download Files</button>
+        <h4>Admin Dashboard</h4>
+        <hr/>
+        <div onClick={() => setSelectedComponent(<CreateUser />)}>Create<br></br>New User</div>
+        <div onClick={() => setSelectedComponent(<UploadFiles />)}>Upload<br></br>Files</div>
+        <div onClick={() => setSelectedComponent(<DownloadFiles />)}>Download<br></br>Files</div>
       </div>
       <div className="content">
         {selectedComponent}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import UserUpload from '../components/userupload';
 import UserDownload from '../components/userdownload';
-//import './Dashboard.css';
+import '../index.css';
 
 function UserDashboard() {
   const [selectedComponent, setSelectedComponent] = useState(null);
@@ -9,8 +9,10 @@ function UserDashboard() {
   return (
     <div className="dashboard-container">
       <div className="sidebar">
-        <button onClick={() => setSelectedComponent(<UserUpload />)}>Upload Files</button>
-        <button onClick={() => setSelectedComponent(<UserDownload />)}>Download Files</button>
+        <h4>User Dashboard</h4>
+        <hr/>
+        <div onClick={() => setSelectedComponent(<UserUpload />)}>Upload<br></br>Files</div>
+        <div onClick={() => setSelectedComponent(<UserDownload />)}>Download<br></br>Files</div>
       </div>
       <div className="content">
         {selectedComponent}

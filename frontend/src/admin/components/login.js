@@ -1,17 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-//import './Login.css';
+import '../../index.css';
 
 function AdminLogin() {
   return (
+    <div className="login-body">
     <div className="login-container">
-      <h2>Admin Login</h2>
-      <form>
+      <form className="loginform">
+        <h2>ADMIN LOGIN</h2>
         <input type="text" placeholder="Username" required />
         <input type="password" placeholder="Password" required />
-        <Link to="/forgot-password">Forgot Password?</Link>
-        <button type="submit">Login</button>
+        <Link to="/forgot-password" className="Link">Forgot Password?</Link>
+        <button type="submit">login</button>
       </form>
+    </div>
     </div>
   );
 }
