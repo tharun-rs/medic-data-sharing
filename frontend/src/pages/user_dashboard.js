@@ -4,7 +4,7 @@ import UserDownload from '../components/userdownload';
 import '../index.css';
 
 function UserDashboard() {
-  const [selectedComponent, setSelectedComponent] = useState(null);
+  const [selectedComponent, setSelectedComponent] = useState(<UserUpload /> );
 
   return (
     <div className="dashboard-container">

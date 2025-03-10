@@ -305,6 +305,28 @@ services:
     networks:
       - test
 
+  frontend1:
+    build:
+      context: ./frontend
+    container_name: frontend1
+    ports:
+      - "5000:3000"
+    depends_on:
+      - edge-app1
+    networks:
+      - test
+
+  frontend2:
+    build:
+      context: ./frontend
+    container_name: frontend2
+    ports:
+      - "5001:3000"
+    depends_on:
+      - edge-app2
+    networks:
+      - test
+
 volumes:
   mongodb1_data:
   mongodb2_data:
