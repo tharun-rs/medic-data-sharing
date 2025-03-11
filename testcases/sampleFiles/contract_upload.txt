@@ -1,0 +1,1 @@
+This is a sample contract signed by patient and hospital authorizing hospitals to upload patient file.
