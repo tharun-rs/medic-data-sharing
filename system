@@ -9,6 +9,14 @@ if [ "$1" == "restart" ] && [ "$2" == "edge" ]; then
     docker-compose -f docker-compose.demo.yml up -d edge-app1
     docker-compose -f docker-compose.demo.yml up -d edge-app2
 
+elif [ "$1" == "restart" ] && [ "$2" == "frontend" ]; then
+    docker rm -f frontend1
+    docker rm -f frontend2
+    docker rmi -f medic-data-sharing_frontend1
+    docker rmi -f medic-data-sharing_frontend2
+    docker-compose -f docker-compose.demo.yml up -d frontend1
+    docker-compose -f docker-compose.demo.yml up -d frontend2
+
 elif [ "$1" == "up" ]; then
     cd blockchain/test-network
     # start the network
