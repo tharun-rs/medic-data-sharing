@@ -29,7 +29,7 @@ function DownloadFiles() {
       pii: `${process.env.BASE_URL}/fileHandler/download/pii`,
       phi: formData.anonymous
         ? `${process.env.BASE_URL}/fileHandler/download/phi/anonymous`
-        : `${process.env.BASE_URL}/fileHandler/download/phi/regular`,
+        : `${process.env.BASE_URL}/fileHandler/download/phi`,
     };
 
     const requestData = {

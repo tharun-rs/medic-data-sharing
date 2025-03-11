@@ -4,6 +4,7 @@ const P2PNode = require('./p2pNode');
 const { getAllPIIByPatientID } = require('../peerAdapter/dataUploadContracts');
 const { queryPIIAccessRequestsByFileID } = require('../peerAdapter/piiContracts');
 const { error } = require('console');
+const { queryPHIAccessRequestsByFileId } = require('../peerAdapter/phiContracts');
 
 class P2PNodeManager {
   constructor() {
@@ -47,6 +48,15 @@ class P2PNodeManager {
       try {
         if (fileType === "pii") {
           const response = await queryPIIAccessRequestsByFileID(fileId);
+          const matchedRecord = response.find(record => record.requestor === requestor);
+          if(matchedRecord){
+            requestor_address = matchedRecord.requestor_address;
+          } else {
+            throw Error("Access not available");
+          }
+        }
+        else if (fileType === "phi") {
+          const response = await queryPHIAccessRequestsByFileId(fileId);
           const matchedRecord = response.find(record => record.requestor === requestor);
           if(matchedRecord){
             requestor_address = matchedRecord.requestor_address;

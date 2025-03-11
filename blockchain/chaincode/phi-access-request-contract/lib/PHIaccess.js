@@ -5,10 +5,10 @@ const stringify = require('json-stringify-deterministic');
 const sortKeysRecursive = require('sort-keys-recursive');
 
 class PHIAccessRequestContract extends Contract {
-    async createAccessRequestWithFileID(ctx, file_id, data_custodian, requestor, requestor_address, time_stamp) {
+    async createAccessRequestWithFileID(ctx, patient_id, file_id, data_custodian, requestor, requestor_address, time_stamp) {
         const auth = await ctx.stub.invokeChaincode(
-            'AuthorizationContract', // Target contract name
-            ['queryAuthorizationForPatientByFileId', file_id, requestor], // Function name and arguments
+            'auth', // Target contract name
+            ['queryAuthorizationForPatient', patient_id, requestor], // Function name and arguments
             ctx.stub.getChannelID()
         );
 
@@ -20,7 +20,7 @@ class PHIAccessRequestContract extends Contract {
         const authPayload = JSON.parse(auth.payload.toString());
 
         // Check if the response is empty or if write_access is false in any entry
-        if (!authPayload.length || authPayload.some(record => !record.Record.read_access)) {
+        if (!authPayload.length || authPayload.some(record => !record.read_access)) {
             throw new Error(`Authorization denied for data custodian: ${data_custodian}`);
         }
 
@@ -38,7 +38,7 @@ class PHIAccessRequestContract extends Contract {
 
     async createAccessRequestWithFilters(ctx, requestor, requestor_address, file_type, file_tag, begin_time, end_time, time_stamp) {
         const auth = await ctx.stub.invokeChaincode(
-            'AuthorizationContract', // Target contract name
+            'auth', // Target contract name
             ['queryAuthorizationForAnonymousData', requestor], // Function name and arguments
             ctx.stub.getChannelID()
         );

@@ -1,25 +1,27 @@
 const { connectToNetwork } = require('./connect');
 
-async function createPHIAccessRequestWithFileID(file_id, data_custodian, requestor, requestor_address){
+async function createPHIAccessRequestWithFileID(patient_id, file_id, data_custodian, requestor, requestor_address){
     try {
-        const { gateway, contract } = await connectToNetwork('PHIAccessRequestContract');
+        const { gateway, contract } = await connectToNetwork('phi');
         const result = await contract.submitTransaction(
             'createAccessRequestWithFileID',
+            patient_id,
             file_id,
             data_custodian,
             requestor,
-            requestor_address
+            requestor_address,
+            new Date().toISOString(),
         );
         gateway.disconnect();
-        res.send({ success: true, message: 'PHI access request created successfully.', result: result.toString() });
+        return result.toString();
     } catch (error) {
-        res.status(500).send({ success: false, message: `Failed to create PHI access request: ${error}` });
+        throw error;
     }
 }
 
 async function createPHIAccessRequestWithFilters(requestor, requestor_address, file_type, file_tag, begin_time, end_time){
     try {
-        const { gateway, contract } = await connectToNetwork('PHIAccessRequestContract');
+        const { gateway, contract } = await connectToNetwork('phi');
         const result = await contract.submitTransaction(
             'createAccessRequestWithFilters',
             requestor,
@@ -27,18 +29,19 @@ async function createPHIAccessRequestWithFilters(requestor, requestor_address, f
             file_type,
             file_tag,
             begin_time,
-            end_time
+            end_time,
+            new Date().toISOString(),
+            
         );
-        gateway.disconnect();
-        res.send({ success: true, message: 'PHI access request created successfully.', result: result.toString() });
+        gateway.disconnect();return result.toString();
     } catch (error) {
-        res.status(500).send({ success: false, message: `Failed to create PHI access request: ${error}` });
+        throw error;
     }
 }
 
 async function queryPHIAccessRequestsByFileId(fileId, requestor, requestor_address, data_custodian){
     try {
-        const { gateway, contract } = await connectToNetwork('PHIAccessRequestContract');
+        const { gateway, contract } = await connectToNetwork('phi');
         const result = await contract.evaluateTransaction(
             'queryAccessRequestsByFileId',
             fileId,
@@ -47,16 +50,16 @@ async function queryPHIAccessRequestsByFileId(fileId, requestor, requestor_addre
             data_custodian
         );
         gateway.disconnect();
-        res.send({ success: true, data: JSON.parse(result.toString()) });
+        return JSON.parse(result.toString());
     } catch (error) {
-        res.status(500).send({ success: false, message: `Failed to query PHI access requests: ${error}` });
+        throw error;
     }
 }
 
 // Query Access Requests by Filters
 async function queryPHIAccessRequestsByFilter(requestor, requestor_address, file_type, file_tag, begin_time, end_time){
     try {
-        const { gateway, contract } = await connectToNetwork('PHIAccessRequestContract');
+        const { gateway, contract } = await connectToNetwork('phi');
         const result = await contract.evaluateTransaction(
             'queryAccessRequestsByFilter',
             requestor,
@@ -67,9 +70,9 @@ async function queryPHIAccessRequestsByFilter(requestor, requestor_address, file
             end_time
         );
         gateway.disconnect();
-        res.send({ success: true, data: JSON.parse(result.toString()) });
+        return JSON.parse(result.toString());
     } catch (error) {
-        res.status(500).send({ success: false, message: `Failed to query PHI access requests: ${error}` });
+        throw error;
     }
 }
 
