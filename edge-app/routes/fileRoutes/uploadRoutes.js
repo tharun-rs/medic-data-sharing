@@ -39,13 +39,13 @@ const upload = multer({ storage });
  */
 router.post("/authorization", upload.single("file"), async (req, res) => {
     try {
-        
+
         const { patientId, readAccess, writeAccess, anonymousPHIAccess } = req.body;
         if (!req.file) {
             return res.status(400).json({ error: "No file uploaded" });
         }
         const filePath = req.file.path;
-        
+
         //get file hash
         const fileHash = await getFileHash(filePath);
 
@@ -67,13 +67,13 @@ router.post("/authorization", upload.single("file"), async (req, res) => {
 
 router.post("/pii", upload.single("file"), async (req, res) => {
     try {
-        
+
         const { patientId } = req.body;
         if (!req.file) {
             return res.status(400).json({ error: "No file uploaded" });
         }
         const filePath = req.file.path;
-        
+
         //get file hash
         const fileHash = await getFileHash(filePath);
 
@@ -88,21 +88,27 @@ router.post("/pii", upload.single("file"), async (req, res) => {
         res.json({ message: "File uploaded successfully", fileId, contract });
     } catch (error) {
         console.log(error);
+
+        if (error.message.includes("Authorization denied for data custodian")) {
+            return res.status(403).json({ error: "Authorization error. Please check authorization contract" });
+        }
+
         res.status(500).json({ error: error.message });
     }
+
 });
 
 
 
 router.post("/phi", upload.single("file"), async (req, res) => {
     try {
-        
+
         const { patientId, fileType, fileTag } = req.body;
         if (!req.file) {
             return res.status(400).json({ error: "No file uploaded" });
         }
         const filePath = req.file.path;
-        
+
         //get file hash
         const fileHash = await getFileHash(filePath);
 

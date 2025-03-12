@@ -28,8 +28,8 @@ function DownloadFiles() {
       ["authorization", `${process.env.REACT_APP_BASE_URL}/fileHandler/download/authorization/patientId`],
       ["pii", `${process.env.REACT_APP_BASE_URL}/fileHandler/download/pii`],
       ["phi", formData.anonymous
-          ? `${process.env.REACT_APP_BASE_URL}/fileHandler/download/phi/anonymous`
-          : `${process.env.REACT_APP_BASE_URL}/fileHandler/download/phi`
+        ? `${process.env.REACT_APP_BASE_URL}/fileHandler/download/phi/anonymous`
+        : `${process.env.REACT_APP_BASE_URL}/fileHandler/download/phi`
       ]
     ]);
 
@@ -52,7 +52,7 @@ function DownloadFiles() {
         requestData.patientId = formData.patientId;
         requestData.dataCustodian = formData.dataCustodian;
       }
-    }       
+    }
 
     try {
       const response = await fetch(apiEndpoints.get(section), {
@@ -63,27 +63,31 @@ function DownloadFiles() {
         body: JSON.stringify(requestData),
       });
 
-      if (!response.ok) throw new Error("Download failed");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({})); // Handle non-JSON errors
+        throw new Error(errorData.message || `Download failed with status ${response.status}`);
+      }
 
       // Handle file download
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `downloaded_file`);
+      link.setAttribute("download", "downloaded_file");
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Download error:", error);
-      alert("Failed to download file.");
+      alert(error.message || "Failed to download file.");
     }
+
   };
 
   return (
     <div className="download-container">
-      <h2>Download Files</h2> 
+      <h2>Download Files</h2>
 
       {/* Section Selection Buttons */}
       <div className="flex-1 flex justify-center items-center p-6" style={{
@@ -105,7 +109,7 @@ function DownloadFiles() {
       </div>
 
       {/* Form */}
-      <form className="formSection">
+      <form className="formSection" onSubmit={handleSubmit}>
         <h3 className="text-md font-semibold text-center">{section.toUpperCase()} File</h3>
 
         {/* Patient ID Input */}

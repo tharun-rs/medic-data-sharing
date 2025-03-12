@@ -69,10 +69,15 @@ function UploadFiles() {
       });
 
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || `Upload failed with status ${response.status}`);
+      }
+
       alert(data.message || "Upload successful");
     } catch (error) {
       console.error("Error uploading file:", error);
-      alert("Failed to upload file");
+      alert(error.message || "Failed to upload file");
     }
   };
 

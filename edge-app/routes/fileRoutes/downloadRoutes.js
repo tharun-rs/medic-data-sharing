@@ -141,9 +141,15 @@ router.post("/pii", async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error downloading file:", error);
+        console.log(error);
+
+        if (error.message.includes("Authorization denied for data custodian")) {
+            return res.status(403).json({ error: "Authorization error. Please check authorization contract" });
+        }
+
         res.status(500).json({ error: error.message });
     }
+
 });
 
 router.post("/phi", async (req, res) => {
