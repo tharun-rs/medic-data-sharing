@@ -14,6 +14,7 @@ function App() {
     <Router>
       <div className="app-container">
         <Routes>
+          <Route path="" element={<UserLogin />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/user/login" element={<UserLogin />} />
           <Route

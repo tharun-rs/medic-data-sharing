@@ -82,149 +82,146 @@ function DownloadFiles() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100" style={{ maxWidth: "80vw", height: "80vh", margin: "auto", padding: "20px", border: "1px solid #ddd", borderRadius: "8px", background: "#fff" }}>
-      {/* Narrower Container */}
-      <div className="w-[240px] bg-white p-4 rounded-lg shadow-lg">
-        <h2 className="text-lg font-bold text-center mb-4">Download Files</h2>
+    <div className="download-container">
+      <h2>Download Files</h2> 
 
-        {/* Section Selection Buttons */}
-        <div className="flex-1 flex justify-center items-center p-6" style={{
-          display: "flex",
-          justifyContent: "space-around", // Equal spacing
-          alignItems: "center", // Vertical centering
-          padding: "4px"
-        }}>
-          {["pii", "authorization", "phi"].map((type) => (
-            <Button
-              key={type}
-              type={section === type ? "primary" : "default"}
-              onClick={() => setSection(type)}
-              className="w-1/3 text-xs"
-            >
-              {type.toUpperCase()}
-            </Button>
-          ))}
-        </div>
+      {/* Section Selection Buttons */}
+      <div className="flex-1 flex justify-center items-center p-6" style={{
+        display: "flex",
+        justifyContent: "space-around", // Equal spacing
+        alignItems: "center", // Vertical centering
+        padding: "8px"
+      }}>
+        {["pii", "authorization", "phi"].map((type) => (
+          <Button
+            key={type}
+            type={section === type ? "primary" : "default"}
+            onClick={() => setSection(type)}
+            className="w-1/3 text-xs"
+          >
+            {type.toUpperCase()}
+          </Button>
+        ))}
+      </div>
 
-        {/* Form */}
-        <form className="space-y-2 flex flex-col" onSubmit={handleSubmit} style={{ maxWidth: "25vw", margin: "auto", padding: "20px", border: "1px solid #ddd", borderRadius: "8px", background: "#fff" }}>
-          <h3 className="text-md font-semibold text-center">{section.toUpperCase()} File</h3>
+      {/* Form */}
+      <form className="formSection">
+        <h3 className="text-md font-semibold text-center">{section.toUpperCase()} File</h3>
 
-          {/* Patient ID Input */}
+        {/* Patient ID Input */}
+        <Input
+          type="text"
+          name="patientId"
+          placeholder="Patient ID"
+          value={formData.patientId}
+          onChange={handleChange}
+          required
+          className="text-xs"
+        />
+
+        {/* Authorization Section */}
+        {section === "authorization" && (
           <Input
             type="text"
-            name="patientId"
-            placeholder="Patient ID"
-            value={formData.patientId}
+            name="requestor"
+            placeholder="Requestor"
+            value={formData.requestor}
             onChange={handleChange}
             required
             className="text-xs"
           />
+        )}
 
-          {/* Authorization Section */}
-          {section === "authorization" && (
-            <Input
-              type="text"
-              name="requestor"
-              placeholder="Requestor"
-              value={formData.requestor}
-              onChange={handleChange}
-              required
-              className="text-xs"
-            />
-          )}
+        {/* PII Section */}
+        {section === "pii" && (
+          <Input
+            type="text"
+            name="dataCustodian"
+            placeholder="Data Custodian"
+            value={formData.dataCustodian}
+            onChange={handleChange}
+            required
+            className="text-xs"
+          />
+        )}
 
-          {/* PII Section */}
-          {section === "pii" && (
-            <Input
-              type="text"
-              name="dataCustodian"
-              placeholder="Data Custodian"
-              value={formData.dataCustodian}
-              onChange={handleChange}
-              required
-              className="text-xs"
-            />
-          )}
+        {/* PHI Section */}
+        {section === "phi" && (
+          <>
+            <span style={{ marginLeft: "10px" }}>Anonymous?
+              <label>
+                <Radio
+                  type="radio"
+                  className="anonymous"
+                  name="anonymous"
+                  value="yes"
+                  checked={formData.anonymous}
+                  onChange={() => setFormData((prev) => ({ ...prev, anonymous: true }))}
+                />
+                Yes
+              </label>
+              <label>
+                <Radio
+                  type="radio"
+                  className="anonymous"
+                  name="anonymous"
+                  value="no"
+                  checked={!formData.anonymous}
+                  onChange={() => setFormData((prev) => ({ ...prev, anonymous: false }))}
+                />
+                No
+              </label>
+            </span>
 
-          {/* PHI Section */}
-          {section === "phi" && (
-            <>
-              <span style={{ marginLeft: "10px" }}>Anonymous?
-                <label>
-                  <Radio
-                    type="radio"
-                    className="anonymous"
-                    name="anonymous"
-                    value="yes"
-                    checked={formData.anonymous}
-                    onChange={() => setFormData((prev) => ({ ...prev, anonymous: true }))}
-                  />
-                  Yes
-                </label>
-                <label>
-                  <Radio
-                    type="radio"
-                    className="anonymous"
-                    name="anonymous"
-                    value="no"
-                    checked={!formData.anonymous}
-                    onChange={() => setFormData((prev) => ({ ...prev, anonymous: false }))}
-                  />
-                  No
-                </label>
-              </span>
-
-              {!formData.anonymous ? (
+            {!formData.anonymous ? (
+              <Input
+                type="text"
+                name="dataCustodian"
+                placeholder="Data Custodian"
+                value={formData.dataCustodian}
+                onChange={handleChange}
+                required
+                className="text-xs"
+              />
+            ) : (
+              <>
                 <Input
                   type="text"
-                  name="dataCustodian"
-                  placeholder="Data Custodian"
-                  value={formData.dataCustodian}
+                  name="fileType"
+                  placeholder="File Type"
+                  value={formData.fileType}
                   onChange={handleChange}
                   required
                   className="text-xs"
                 />
-              ) : (
-                <>
-                  <Input
-                    type="text"
-                    name="fileType"
-                    placeholder="File Type"
-                    value={formData.fileType}
-                    onChange={handleChange}
-                    required
-                    className="text-xs"
-                  />
-                  <Input
-                    type="text"
-                    name="fileTag"
-                    placeholder="File Tag"
-                    value={formData.fileTag}
-                    onChange={handleChange}
-                    required
-                    className="text-xs"
-                  />
-                  <Input
-                    type="text"
-                    name="dateRange"
-                    placeholder="Date Range (YYYY-MM-DD)"
-                    value={formData.dateRange}
-                    onChange={handleChange}
-                    required
-                    className="text-xs"
-                  />
-                </>
-              )}
-            </>
-          )}
+                <Input
+                  type="text"
+                  name="fileTag"
+                  placeholder="File Tag"
+                  value={formData.fileTag}
+                  onChange={handleChange}
+                  required
+                  className="text-xs"
+                />
+                <Input
+                  type="text"
+                  name="dateRange"
+                  placeholder="Date Range (YYYY-MM-DD)"
+                  value={formData.dateRange}
+                  onChange={handleChange}
+                  required
+                  className="text-xs"
+                />
+              </>
+            )}
+          </>
+        )}
 
-          {/* Submit Button */}
-          <Button type="primary" htmlType="submit" className="w-full text-xs">
-            Download
-          </Button>
-        </form>
-      </div>
+        {/* Submit Button */}
+        <Button type="primary" htmlType="submit" className="w-full text-xs">
+          Download
+        </Button>
+      </form>
     </div>
   );
 }

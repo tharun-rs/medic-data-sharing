@@ -77,32 +77,34 @@ function UploadFiles() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100" style={{ maxWidth: "80vw", height: "80vh", margin: "auto", padding: "20px", border: "1px solid #ddd", borderRadius: "8px", background: "#fff" }}>
+    <div className="upload-container">
       {/* Narrower Container */}
-      <div className="w-[240px] bg-white p-4 rounded-lg shadow-lg">
-        <h2 className="text-lg font-bold text-center mb-4">Upload Files</h2>
+      <h2>Upload Files</h2>
 
-        {/* Section Selection Buttons */}
-        <div className="flex-1 flex justify-center items-center p-6" style={{
-          display: "flex",
-          justifyContent: "space-around", // Equal spacing
-          alignItems: "center", // Vertical centering
-          padding: "4px"
-        }}>
-          {["pii", "authorization", "phi"].map((type) => (
-            <Button
-              key={type}
-              type={section === type ? "primary" : "default"}
-              onClick={() => setSection(type)}
-              className="w-1/3 text-xs"
-            >
-              {type.toUpperCase()}
-            </Button>
-          ))}
-        </div>
+      {/* Section Selection Buttons */}
+      <div className="flex-1 flex justify-center items-center p-6" style={{
+        display: "flex",
+        justifyContent: "space-around", // Equal spacing
+        alignItems: "center", // Vertical centering
+        padding: "8px",
+      }}>
+        {["pii", "authorization", "phi"].map((type) => (
+          <Button
+            key={type}
+            type={section === type ? "primary" : "default"}
+            onClick={() => setSection(type)}
+            className="w-1/3 text-xs"
+            style={{
+              boxShadow: "1px 1px 5px rgb(165, 165, 165)"
+            }}
+          >
+            {type.toUpperCase()}
+          </Button>
+        ))}
+      </div>
 
       {/* Form */}
-      <form className="space-y-2 flex flex-col" onSubmit={handleSubmit} style={{ maxWidth: "25vw", margin: "auto", padding: "20px", border: "1px solid #ddd", borderRadius: "8px", background: "#fff" }}>
+      <form className="formSection" onSubmit={handleSubmit}>
         <h3 className="text-md font-semibold text-center">{section.toUpperCase()} File</h3>
 
         {/* File Upload */}
@@ -125,7 +127,7 @@ function UploadFiles() {
 
         {/* Authorization Section */}
         {section === "authorization" && (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col">
             <Checkbox name="readAccess" checked={formData.readAccess} onChange={handleChange}>
               Read Access
             </Checkbox>
@@ -163,12 +165,12 @@ function UploadFiles() {
         )}
 
         {/* Submit Button */}
-        <Button type="primary" htmlType="submit" className="w-full text-xs">
+        <Button type="primary" htmlType="submit">
           Upload
         </Button>
       </form>
     </div>
-    </div >
+
   );
 }
 
