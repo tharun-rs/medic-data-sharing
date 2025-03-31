@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ipfs-node-{{ORG_ID}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ipfs-node-{{ORG_ID}}
+  template:
+    metadata:
+      labels:
+        app: ipfs-node-{{ORG_ID}}
+    spec:
+      containers:
+        - name: ipfs-node
+          image: ipfs-app:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3001
+            - containerPort: 4005
+          env:
+            - name: BLOCKSTORE_PATH
+              value: "/usr/src/app/data/blockstore"
+            - name: DATASTORE_PATH
+              value: "/usr/src/app/data/datastore"
+            - name: BOOTSTRAP_NODE_IP
+              value: "bootstrap"
+          volumeMounts:
+            - name: ipfs-storage
+              mountPath: /usr/src/app/data
+      volumes:
+        - name: ipfs-storage
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ipfs-node-{{ORG_ID}}
+spec:
+  selector:
+    app: ipfs-node-{{ORG_ID}}
+  ports:
+    - name: http-api
+      port: 3001
+      targetPort: 3001
+    - name: libp2p
+      port: 4005
+      targetPort: 4005

@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: peer0-{{ORG_ID}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: peer0-{{ORG_ID}}
+  template:
+    metadata:
+      labels:
+        app: peer0-{{ORG_ID}}
+    spec:
+      containers:
+      - name: peer
+        image: hyperledger/fabric-peer:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            export CORE_PEER_ID=peer0.{{ORG_ID}}
+            export CORE_PEER_ADDRESS=peer0.{{ORG_ID}}:7051
+            export CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+            export CORE_PEER_LOCALMSPID={{ORG_ID}}MSP
+            export CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/peers/peer0.{{ORG_ID}}.example.com/msp
+
+            peer node start
+        env:
+        - name: FABRIC_LOGGING_SPEC
+          value: "INFO"
+        ports:
+        - containerPort: 7051
+        volumeMounts:
+        - name: crypto-material
+          mountPath: /etc/hyperledger/fabric/crypto-config
+      volumes:
+      - name: crypto-material
+        persistentVolumeClaim:
+          claimName: fabric-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: peer0-{{ORG_ID}}
+spec:
+  selector:
+    app: peer0-{{ORG_ID}}
+  ports:
+    - protocol: TCP
+      port: 7051  # External port
+      targetPort: 7051  # Container port
+  type: ClusterIP  # Use NodePort if accessing outside the cluster

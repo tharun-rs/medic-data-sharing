@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edge-app-{{ORG_ID}}
+  labels:
+    app: edge-app
+    org: {{ORG_ID}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: edge-app
+      org: {{ORG_ID}}
+  template:
+    metadata:
+      labels:
+        app: edge-app
+        org: {{ORG_ID}}
+    spec:
+      containers:
+        - name: edge-app
+          image: edge-app:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000
+            - containerPort: 4002
+          env:
+            - name: PORT
+              value: "3000"
+            - name: MONGO_URI
+              value: "mongodb://mongodb-{{ORG_ID}}:27017"
+            - name: MONGO_DB_NAME
+              value: "edgeApp"
+            - name: IPFS_API_URI
+              value: "http://ipfs-node-{{ORG_ID}}:3001"
+            - name: NODE_NO_WARNINGS
+              value: "1"
+            - name: ORG_NAME
+              value: "{{ORG_NAME}}"
+            - name: ORG_ID_FOR_FOLDERS
+              value: "{{ORG_ID}}"
+            - name: CORE_PEER_ADDRESS
+              value: "peer0.{{ORG_ID}}.example.com:7051"
+            - name: ORDERER_ADDRESS
+              value: "orderer.example.com:7050"
+            - name: BOOTSTRAP_NODE_IP
+              value: "bootstrap"
+            - name: PEER_PORT_NUMBER
+              value: "9051"
+          volumeMounts:
+            - mountPath: /etc/hyperledger/fabric
+              name: fabric-config
+      volumes:
+        - name: fabric-config
+          hostPath:
+            path: /home/tharunrs/medic-data-sharing/blockchain/test-network/organizations/peerOrganizations/{{ORG_ID}}.example.com
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: edge-app-{{ORG_ID}}
+  labels:
+    app: edge-app
+spec:
+  selector:
+    app: edge-app
+    org: {{ORG_ID}}
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000

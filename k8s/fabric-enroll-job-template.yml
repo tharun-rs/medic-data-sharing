@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: fabric-enroll-{{ORG_ID}}
+spec:
+  template:
+    spec:
+      containers:
+      - name: fabric-cli
+        image: hyperledger/fabric-ca:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            mkdir -p /etc/hyperledger/fabric-ca-client
+            export FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client
+
+            echo "Enrolling CA Admin..."
+            fabric-ca-client enroll -u http://admin:adminpw@fabric-ca:7054
+
+            echo "Registering peer0.{{ORG_ID}}..."
+            fabric-ca-client register --id.name peer0 --id.secret peer0pw --id.type peer --url http://fabric-ca:7054
+
+            echo "Enrolling peer0.{{ORG_ID}}..."
+            fabric-ca-client enroll -u http://peer0:peer0pw@fabric-ca:7054 -M /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/peers/peer0.{{ORG_ID}}.example.com/msp
+
+            echo "Enrollment completed for {{ORG_ID}}!"
+        volumeMounts:
+          - name: fabric-data
+            mountPath: /etc/hyperledger/fabric
+      restartPolicy: Never
+      volumes:
+      - name: fabric-data
+        persistentVolumeClaim:
+          claimName: fabric-pvc
+  backoffLimit: 3

@@ -1,0 +1,71 @@
+#!/bin/bash
+
+# Stop all deployments if "stop" is passed as the first argument
+if [ "$1" == "stop" ]; then
+    echo "Stopping all deployments..."
+    kubectl delete deployments --all
+    kubectl delete services --all
+    kubectl delete pvc --all
+    kubectl delete pv --all
+    kubectl delete jobs --all
+    exit 0
+fi
+
+# Create images for all apps
+docker build -t edge-app:latest ./edge-app
+kind load docker-image edge-app:latest
+docker build -t ipfs-app:latest ./ipfs
+kind load docker-image ipfs-app:latest
+docker build -t bootstrap-app:latest ./bootstraps
+kind load docker-image bootstrap-app:latest
+
+# Ensuring mount folder for pvc exists
+if [ ! -d "~/fabric-data" ]; then
+    mkdir -p /home/tharunrs/fabric-data
+    chmod 777 /home/tharunrs/fabric-data
+    echo "Created folder ~/fabric-data"
+else
+    echo "Folder ~/fabric-data already exists"
+fi
+
+# Create a PVC for crypto materials
+kubectl apply -f k8s/pvc.yml
+
+# Deploy Fabric CA
+kubectl apply -f k8s/fabric-ca.yml
+
+# Define organizations
+declare -A ORGS
+ORGS=( ["org1"]="Org1" ["org2"]="Org2" ["org3"]="Org3" )
+
+# Deploy services for each organization
+for ORG_ID in "${!ORGS[@]}"; do
+    ORG_NAME=${ORGS[$ORG_ID]}
+    
+    echo "Deploying Edge Node for $ORG_NAME ($ORG_ID)..."
+    sed -e "s/{{ORG_ID}}/$ORG_ID/g" -e "s/{{ORG_NAME}}/$ORG_NAME/g" k8s/edge-app-template.yml > edge-app-$ORG_ID.yaml
+    kubectl apply -f edge-app-$ORG_ID.yaml
+    rm -f edge-app-$ORG_ID.yaml
+
+    echo "Deploying IPFS Node for $ORG_NAME ($ORG_ID)..."
+    sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/ipfs-template.yml > ipfs-node-$ORG_ID.yaml
+    kubectl apply -f ipfs-node-$ORG_ID.yaml
+    rm -f ipfs-node-$ORG_ID.yaml
+
+    echo "Deploying MongoDB for $ORG_NAME ($ORG_ID)..."
+    sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/mongodb-template.yml > mongodb-$ORG_ID.yaml
+    kubectl apply -f mongodb-$ORG_ID.yaml
+    rm -f mongodb-$ORG_ID.yaml
+    
+    echo "Running Fabric Enroll Job for $ORG_NAME ($ORG_ID)..."
+    sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/fabric-enroll-job-template.yml > fabric-enroll-$ORG_ID.yaml
+    kubectl apply -f fabric-enroll-$ORG_ID.yaml
+    rm -f fabric-enroll-$ORG_ID.yaml
+
+    echo "Deploying peer node for $ORG_NAME ($ORG_ID)..."
+    sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/peer-template.yml > peer-$ORG_ID.yaml
+    kubectl apply -f peer-$ORG_ID.yaml
+    rm -f peer-$ORG_ID.yaml
+done
+
+echo "Deployment completed."
