@@ -5,9 +5,8 @@ if [ "$1" == "stop" ]; then
     echo "Stopping all deployments..."
     kubectl delete deployments --all
     kubectl delete services --all
-    kubectl delete pvc --all
-    kubectl delete pv --all
     kubectl delete jobs --all
+    sudo rm -rf /home/tharunrs/fabric-data/*
     exit 0
 fi
 
@@ -19,14 +18,13 @@ kind load docker-image ipfs-app:latest
 docker build -t bootstrap-app:latest ./bootstraps
 kind load docker-image bootstrap-app:latest
 
-# Ensuring mount folder for pvc exists
-if [ ! -d "~/fabric-data" ]; then
-    mkdir -p /home/tharunrs/fabric-data
-    chmod 777 /home/tharunrs/fabric-data
-    echo "Created folder ~/fabric-data"
-else
-    echo "Folder ~/fabric-data already exists"
-fi
+
+# Define organizations
+declare -A ORGS
+ORGS=( ["org1"]="Org1" ["org2"]="Org2" ["org3"]="Org3" )
+
+ORG_IDS=$(echo ${!ORGS[@]} | tr ' ' ',')
+
 
 # Create a PVC for crypto materials
 kubectl apply -f k8s/pvc.yml
@@ -34,14 +32,49 @@ kubectl apply -f k8s/pvc.yml
 # Deploy Fabric CA
 kubectl apply -f k8s/fabric-ca.yml
 
-# Define organizations
-declare -A ORGS
-ORGS=( ["org1"]="Org1" ["org2"]="Org2" ["org3"]="Org3" )
+echo "waiting for Fabric CA to be ready..."
+sleep 10
+
+for ORG_ID in "${!ORGS[@]}"; do
+    ORG_NAME=${ORGS[$ORG_ID]}
+
+    echo "Running Fabric Enroll Job for $ORG_NAME ($ORG_ID)..."
+    sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/fabric-enroll-job-template.yml > fabric-enroll-$ORG_ID.yaml
+    kubectl apply -f fabric-enroll-$ORG_ID.yaml
+    rm -f fabric-enroll-$ORG_ID.yaml
+
+done
+
+echo "Waiting for Fabric CA enrollment jobs to complete..."
+sleep 10
+
+echo "Generating ConfigTx.yaml..."
+sed -e "s/{{ORG_IDS}}/$ORG_IDS/g" k8s/configtx-job-template.yml > configtx-job.yaml
+kubectl apply -f configtx-job.yaml
+rm -f configtx-job.yaml
+echo "Waiting for configtx.yaml generation to complete..."
+kubectl wait --for=condition=complete --timeout=30s job/generate-configtx
+
+# Generate the Genesis Block
+echo "Generating Genesis Block..."
+kubectl apply -f k8s/genesis-job-template.yml
+echo "Waiting for genesis block generation to complete..."
+kubectl wait --for=condition=complete --timeout=30s job/generate-genesis-block
+
+# Run Core Config Generation Job
+echo "Generating core.yaml for all peers..."
+sed -e "s/{{ORG_IDS}}/$ORG_IDS/g" k8s/core-config-job-template.yml > core-config-job.yaml
+kubectl apply -f core-config-job.yaml
+rm -f core-config-job.yaml
+
+# Wait for core config job to finish
+echo "Waiting for core.yaml generation to complete..."
+kubectl wait --for=condition=complete --timeout=30s job/generate-core-config
 
 # Deploy services for each organization
 for ORG_ID in "${!ORGS[@]}"; do
     ORG_NAME=${ORGS[$ORG_ID]}
-    
+
     echo "Deploying Edge Node for $ORG_NAME ($ORG_ID)..."
     sed -e "s/{{ORG_ID}}/$ORG_ID/g" -e "s/{{ORG_NAME}}/$ORG_NAME/g" k8s/edge-app-template.yml > edge-app-$ORG_ID.yaml
     kubectl apply -f edge-app-$ORG_ID.yaml
@@ -56,16 +89,46 @@ for ORG_ID in "${!ORGS[@]}"; do
     sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/mongodb-template.yml > mongodb-$ORG_ID.yaml
     kubectl apply -f mongodb-$ORG_ID.yaml
     rm -f mongodb-$ORG_ID.yaml
-    
-    echo "Running Fabric Enroll Job for $ORG_NAME ($ORG_ID)..."
-    sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/fabric-enroll-job-template.yml > fabric-enroll-$ORG_ID.yaml
-    kubectl apply -f fabric-enroll-$ORG_ID.yaml
-    rm -f fabric-enroll-$ORG_ID.yaml
 
-    echo "Deploying peer node for $ORG_NAME ($ORG_ID)..."
+    echo "Deploying Peer Node for $ORG_NAME ($ORG_ID)..."
     sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/peer-template.yml > peer-$ORG_ID.yaml
     kubectl apply -f peer-$ORG_ID.yaml
     rm -f peer-$ORG_ID.yaml
+
+    echo "Deploying Orderer Node for $ORG_NAME ($ORG_ID)..."
+    sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/orderer-template.yml > orderer-$ORG_ID.yaml
+    kubectl apply -f orderer-$ORG_ID.yaml
+    rm -f orderer-$ORG_ID.yaml
 done
 
-echo "Deployment completed."
+# Wait for peer and orderer deployments to be ready
+echo "Waiting for all deployments to be ready..."
+sleep 30  # Adjust time as needed
+
+# Create the Fabric channel
+echo "Creating Fabric channel..."
+sed -e "s/{{ORDERER_ID}}/orderer-org1/g" k8s/create-channel-template.yml > create-channel.yaml
+kubectl apply -f create-channel.yaml
+rm -f create-channel.yaml
+
+# Wait for channel creation
+echo "Waiting for channel creation to complete..."
+sleep 10
+
+# Have all peer nodes join the channel
+echo "Adding all peer nodes to the channel..."
+sed "s/{{ORG_IDS}}/$(echo ${!ORGS[@]} | tr ' ' ',')/g" k8s/join-channel-template.yml > join-channel.yaml
+kubectl apply -f join-channel.yaml
+rm -f join-channel.yaml
+
+# Wait for peers to join the channel
+echo "Waiting for all peers to join the channel..."
+sleep 10
+
+# Update anchor peers
+echo "Updating anchor peers for all organizations..."
+sed "s/{{ORG_IDS}}/$(echo ${!ORGS[@]} | tr ' ' ',')/g" k8s/update-anchor-peers-template.yml > update-anchor-peers.yaml
+kubectl apply -f update-anchor-peers.yaml
+rm -f update-anchor-peers.yaml
+
+echo "Fabric network setup completed successfully!"

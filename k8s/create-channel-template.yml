@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-channel
+spec:
+  template:
+    spec:
+      containers:
+      - name: cli
+        image: hyperledger/fabric-tools:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            
+            peer channel create -o {{ORDERER_ID}}:7050 -c mychannel -f /etc/hyperledger/fabric/configtx/channel.tx
+
+            echo "Channel 'mychannel' created successfully!"
+      restartPolicy: Never
+      volumes:
+      - name: fabric-data
+        persistentVolumeClaim:
+          claimName: fabric-pvc
+  backoffLimit: 3

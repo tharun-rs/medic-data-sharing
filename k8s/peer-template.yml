@@ -32,7 +32,7 @@ spec:
         - containerPort: 7051
         volumeMounts:
         - name: crypto-material
-          mountPath: /etc/hyperledger/fabric/crypto-config
+          mountPath: /etc/hyperledger/fabric/
       volumes:
       - name: crypto-material
         persistentVolumeClaim:

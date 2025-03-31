@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: orderer-{{ORDERER_ID}}
+  name: orderer-{{ORG_ID}}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: orderer-{{ORDERER_ID}}
+      app: orderer-{{ORG_ID}}
   template:
     metadata:
       labels:
-        app: orderer-{{ORDERER_ID}}
+        app: orderer-{{ORG_ID}}
     spec:
       containers:
       - name: orderer
@@ -21,7 +21,7 @@ spec:
             export ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
             export ORDERER_GENERAL_LISTENPORT=7050
             export ORDERER_GENERAL_LOCALMSPID=OrdererMSP
-            export ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer-{{ORDERER_ID}}.example.com/msp
+            export ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer-{{ORG_ID}}.example.com/msp
             export ORDERER_GENERAL_GENESISPROFILE=SampleSingleMSPChannel
             export ORDERER_GENERAL_BOOTSTRAPFILE=/etc/hyperledger/fabric/crypto-config/genesis.block
 
@@ -29,11 +29,13 @@ spec:
         env:
         - name: FABRIC_LOGGING_SPEC
           value: "INFO"
+        - name: ORDERER_GENERAL_TLS_ENABLED
+          value: "false"
         ports:
         - containerPort: 7050
         volumeMounts:
         - name: crypto-material
-          mountPath: /etc/hyperledger/fabric/crypto-config
+          mountPath: /etc/hyperledger/fabric/
       volumes:
       - name: crypto-material
         persistentVolumeClaim:
@@ -43,10 +45,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: orderer-{{ORDERER_ID}}
+  name: orderer-{{ORG_ID}}
 spec:
   selector:
-    app: orderer-{{ORDERER_ID}}
+    app: orderer-{{ORG_ID}}
   ports:
     - protocol: TCP
       port: 7050  # External port

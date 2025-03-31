@@ -1,17 +1,4 @@
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: fabric-enroll-{{ORG_ID}}
-spec:
-  template:
-    spec:
-      containers:
-      - name: fabric-cli
-        image: hyperledger/fabric-ca:latest
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            # Set up directories
+# Set up directories
             mkdir -p /etc/hyperledger/fabric-ca-client
             export FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric-ca-client
 
@@ -90,12 +77,3 @@ spec:
             EOF
 
             echo "Enrollment completed for {{ORG_ID}}!"
-        volumeMounts:
-          - name: fabric-data
-            mountPath: /etc/hyperledger/fabric
-      restartPolicy: Never
-      volumes:
-      - name: fabric-data
-        persistentVolumeClaim:
-          claimName: fabric-pvc
-  backoffLimit: 3
