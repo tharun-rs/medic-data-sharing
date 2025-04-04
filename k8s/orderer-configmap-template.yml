@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orderer-config-{{ORDERER_ID}}
+data:
+  orderer.yaml: |
+    # Your orderer.yaml configuration
+    General:
+      ListenAddress: 0.0.0.0
+      ListenPort: 7050
+      LocalMSPDir: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer-{{ORDERER_ID}}.example.com/msp
+      LocalMSPID: OrdererMSP

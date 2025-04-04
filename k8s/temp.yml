@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug-pod
+spec:
+  containers:
+  - name: debug
+    image: alpine
+    command: ["/bin/sh", "-c", "sleep 3600"]
+    volumeMounts:
+    - name: crypto-material
+      mountPath: /etc/hyperledger/fabric/
+  volumes:
+  - name: crypto-material
+    persistentVolumeClaim:
+      claimName: fabric-pvc
+  restartPolicy: Never

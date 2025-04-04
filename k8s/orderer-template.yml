@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: orderer-{{ORG_ID}}
+  name: orderer-{{ORDERER_ID}}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: orderer-{{ORG_ID}}
+      app: orderer-{{ORDERER_ID}}
   template:
     metadata:
       labels:
-        app: orderer-{{ORG_ID}}
+        app: orderer-{{ORDERER_ID}}
     spec:
       containers:
       - name: orderer
@@ -21,7 +21,7 @@ spec:
             export ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
             export ORDERER_GENERAL_LISTENPORT=7050
             export ORDERER_GENERAL_LOCALMSPID=OrdererMSP
-            export ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer-{{ORG_ID}}.example.com/msp
+            export ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}.example.com/msp
             export ORDERER_GENERAL_GENESISPROFILE=SampleSingleMSPChannel
             export ORDERER_GENERAL_BOOTSTRAPFILE=/etc/hyperledger/fabric/crypto-config/genesis.block
 
@@ -31,26 +31,20 @@ spec:
           value: "INFO"
         - name: ORDERER_GENERAL_TLS_ENABLED
           value: "false"
+        - name: FABRIC_CFG_PATH
+          value: "/etc/hyperledger/fabric"
         ports:
         - containerPort: 7050
         volumeMounts:
         - name: crypto-material
           mountPath: /etc/hyperledger/fabric/
+        - name: orderer-config
+          mountPath: /etc/hyperledger/fabric/orderer.yaml
+          subPath: orderer.yaml
       volumes:
       - name: crypto-material
         persistentVolumeClaim:
           claimName: fabric-pvc
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: orderer-{{ORG_ID}}
-spec:
-  selector:
-    app: orderer-{{ORG_ID}}
-  ports:
-    - protocol: TCP
-      port: 7050  # External port
-      targetPort: 7050  # Container port
-  type: ClusterIP  # Change to NodePort if accessing outside the cluster
+      - name: orderer-config
+        configMap:
+          name: orderer-config-{{ORDERER_ID}}

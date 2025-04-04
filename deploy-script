@@ -61,19 +61,37 @@ kubectl apply -f k8s/genesis-job-template.yml
 echo "Waiting for genesis block generation to complete..."
 kubectl wait --for=condition=complete --timeout=30s job/generate-genesis-block
 
-# Run Core Config Generation Job
-echo "Generating core.yaml for all peers..."
-sed -e "s/{{ORG_IDS}}/$ORG_IDS/g" k8s/core-config-job-template.yml > core-config-job.yaml
-kubectl apply -f core-config-job.yaml
-rm -f core-config-job.yaml
-
+# # Run Core Config Generation Job
+# echo "Generating core.yaml for all peers..."
+# sed -e "s/{{ORG_IDS}}/$ORG_IDS/g" k8s/core-config-job-template.yml > core-config-job.yaml
+# kubectl apply -f core-config-job.yaml
+# rm -f core-config-job.yaml
 # Wait for core config job to finish
-echo "Waiting for core.yaml generation to complete..."
-kubectl wait --for=condition=complete --timeout=30s job/generate-core-config
+# echo "Waiting for core.yaml generation to complete..."
+# kubectl wait --for=condition=complete --timeout=30s job/generate-core-config
+
+# Run Orderer Config Generation Job
+# echo "Generating core.yaml configmaps for all peers..."
+# sed -e "s/{{ORDERER_ORGS}}/$ORG_IDS/g" k8s/orderer-config-job-template.yml > orderer-config-job.yaml
+# kubectl apply -f orderer-config-job.yaml
+# rm -f orderer-config-job.yaml
+# # Wait for orderer config job to finish
+# echo "Waiting for orderer.yaml generation to complete..."
+# kubectl wait --for=condition=complete --timeout=30s orderer-config-generator
+
+# Run Orderer config generation
+echo "Generating orderer.yaml configmaps for all orderers..."
+for ORG_ID in "${!ORGS[@]}"; do
+    ORDERER_ID=$(echo "$ORG_ID" | sed 's/org//')
+    sed -e "s/{{ORDERER_ID}}/$ORDERER_ID/g" k8s/orderer-configmap-template.yml > orderer-config-job-$ORDERER_ID.yaml
+    kubectl apply -f orderer-config-job-$ORDERER_ID.yaml
+    rm -f orderer-config-job-$ORDERER_ID.yaml
+done
 
 # Deploy services for each organization
 for ORG_ID in "${!ORGS[@]}"; do
     ORG_NAME=${ORGS[$ORG_ID]}
+    ORDERER_ID=$(echo "$ORG_ID" | sed 's/org//')
 
     echo "Deploying Edge Node for $ORG_NAME ($ORG_ID)..."
     sed -e "s/{{ORG_ID}}/$ORG_ID/g" -e "s/{{ORG_NAME}}/$ORG_NAME/g" k8s/edge-app-template.yml > edge-app-$ORG_ID.yaml
@@ -96,7 +114,7 @@ for ORG_ID in "${!ORGS[@]}"; do
     rm -f peer-$ORG_ID.yaml
 
     echo "Deploying Orderer Node for $ORG_NAME ($ORG_ID)..."
-    sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/orderer-template.yml > orderer-$ORG_ID.yaml
+    sed -e "s/{{ORG_ID}}/$ORG_ID/g" -e "s/{{ORDERER_ID}}/$ORDERER_ID/g" k8s/orderer-template.yml > orderer-$ORG_ID.yaml
     kubectl apply -f orderer-$ORG_ID.yaml
     rm -f orderer-$ORG_ID.yaml
 done
