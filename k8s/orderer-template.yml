@@ -54,3 +54,15 @@ spec:
       - name: orderer-data # Empty directory to isolate orderer data
         emptyDir: {}
 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orderer{{ORDERER_ID}}
+spec:
+  selector:
+    app: orderer-{{ORDERER_ID}}
+  ports:
+    - protocol: TCP
+      port: 7050
+      targetPort: 7050

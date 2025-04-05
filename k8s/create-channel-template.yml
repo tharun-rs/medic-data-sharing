@@ -1,8 +1,36 @@
+---
+# ConfigMap for core.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: temp-core
+data:
+  core.yaml: |
+    logging:
+      level: info
+
+    peer:
+      id: cli
+      localMspId: Org1MSP
+      mspConfigPath: /etc/hyperledger/fabric/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp
+      BCCSP:
+        Default: SW
+        SW:
+          Hash: SHA2
+          Security: 256
+          FileKeyStore:
+            KeyStore: /etc/hyperledger/fabric/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp/keystore
+
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: create-channel
 spec:
+  hostAliases:
+      - ip: "orderer{{ORDERER_ID}}"
+        hostnames:
+        - "orderer{{ORDERE_ID}}.example.com"
   template:
     spec:
       containers:
@@ -11,13 +39,32 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
-            
-            peer channel create -o {{ORDERER_ID}}:7050 -c mychannel -f /etc/hyperledger/fabric/configtx/channel.tx
 
-            echo "Channel 'mychannel' created successfully!"
+            export CORE_PEER_LOCALMSPID=Org1MSP
+            export CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp
+
+            peer channel create \
+              -o {{ORDERER_ID}}.example.com:7050 \
+              -c mychannel \
+              -f /etc/hyperledger/fabric/configtx/channel.tx \
+              --tls \
+              --cafile /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/{{ORDERER_ID}}.example.com/tls/ca.crt \
+              --outputBlock /etc/hyperledger/fabric/mychannel.block
+
+        env:
+        - name: FABRIC_CFG_PATH
+          value: "/etc/hyperledger/fabric/config"
+        volumeMounts:
+        - name: fabric-data
+          mountPath: /etc/hyperledger/fabric
+        - name: core-config
+          mountPath: /etc/hyperledger/fabric/config
       restartPolicy: Never
       volumes:
       - name: fabric-data
         persistentVolumeClaim:
           claimName: fabric-pvc
+      - name: core-config
+        configMap:
+          name: temp-core
   backoffLimit: 3
