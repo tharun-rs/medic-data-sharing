@@ -18,6 +18,7 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
           - |
+            echo "Checking production dir contents..." && ls -laR /etc/hyperledger/production
             export ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
             export ORDERER_GENERAL_LISTENPORT=7050
             export ORDERER_GENERAL_LOCALMSPID=OrdererMSP
@@ -30,7 +31,7 @@ spec:
         - name: FABRIC_LOGGING_SPEC
           value: "INFO"
         - name: ORDERER_GENERAL_TLS_ENABLED
-          value: "false"
+          value: "true"
         - name: FABRIC_CFG_PATH
           value: "/etc/hyperledger/fabric"
         ports:
@@ -41,6 +42,8 @@ spec:
         - name: orderer-config
           mountPath: /etc/hyperledger/fabric/orderer.yaml
           subPath: orderer.yaml
+        - name: orderer-data
+          mountPath: /etc/hyperledger/production
       volumes:
       - name: crypto-material
         persistentVolumeClaim:
@@ -48,3 +51,6 @@ spec:
       - name: orderer-config
         configMap:
           name: orderer-config-{{ORDERER_ID}}
+      - name: orderer-data # Empty directory to isolate orderer data
+        emptyDir: {}
+
