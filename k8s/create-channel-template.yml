@@ -12,14 +12,14 @@ data:
     peer:
       id: cli
       localMspId: Org1MSP
-      mspConfigPath: /etc/hyperledger/fabric/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp
+      mspConfigPath: /etc/hyperledger/fabric/crypto-config/peerOrganizations/org1/peers/peer0org1/msp
       BCCSP:
         Default: SW
         SW:
           Hash: SHA2
           Security: 256
           FileKeyStore:
-            KeyStore: /etc/hyperledger/fabric/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp/keystore
+            KeyStore: /etc/hyperledger/fabric/crypto-config/peerOrganizations/org1/peers/peer0org1/msp/keystore
 
 ---
 apiVersion: batch/v1
@@ -27,10 +27,6 @@ kind: Job
 metadata:
   name: create-channel
 spec:
-  hostAliases:
-      - ip: "orderer{{ORDERER_ID}}"
-        hostnames:
-        - "orderer{{ORDERE_ID}}.example.com"
   template:
     spec:
       containers:
@@ -40,15 +36,21 @@ spec:
         args:
           - |
 
+            configtxgen \
+              -profile MultiOrgChannel \
+              -outputCreateChannelTx /etc/hyperledger/fabric/configtx/channel.tx \
+              -channelID mychannel
+
+
             export CORE_PEER_LOCALMSPID=Org1MSP
-            export CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/msp
+            export CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/crypto-config/peerOrganizations/org1/peers/peer0org1/msp
 
             peer channel create \
-              -o {{ORDERER_ID}}.example.com:7050 \
+              -o {{ORDERER_ID}}:7050 \
               -c mychannel \
               -f /etc/hyperledger/fabric/configtx/channel.tx \
               --tls \
-              --cafile /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/{{ORDERER_ID}}.example.com/tls/ca.crt \
+              --cafile /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/{{ORDERER_ID}}/tls/ca.crt \
               --outputBlock /etc/hyperledger/fabric/mychannel.block
 
         env:

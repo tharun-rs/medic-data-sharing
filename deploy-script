@@ -93,20 +93,20 @@ for ORG_ID in "${!ORGS[@]}"; do
     ORG_NAME=${ORGS[$ORG_ID]}
     ORDERER_ID=$(echo "$ORG_ID" | sed 's/org//')
 
-    echo "Deploying Edge Node for $ORG_NAME ($ORG_ID)..."
-    sed -e "s/{{ORG_ID}}/$ORG_ID/g" -e "s/{{ORG_NAME}}/$ORG_NAME/g" k8s/edge-app-template.yml > edge-app-$ORG_ID.yaml
-    kubectl apply -f edge-app-$ORG_ID.yaml
-    rm -f edge-app-$ORG_ID.yaml
+    # echo "Deploying Edge Node for $ORG_NAME ($ORG_ID)..."
+    # sed -e "s/{{ORG_ID}}/$ORG_ID/g" -e "s/{{ORG_NAME}}/$ORG_NAME/g" k8s/edge-app-template.yml > edge-app-$ORG_ID.yaml
+    # kubectl apply -f edge-app-$ORG_ID.yaml
+    # rm -f edge-app-$ORG_ID.yaml
 
-    echo "Deploying IPFS Node for $ORG_NAME ($ORG_ID)..."
-    sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/ipfs-template.yml > ipfs-node-$ORG_ID.yaml
-    kubectl apply -f ipfs-node-$ORG_ID.yaml
-    rm -f ipfs-node-$ORG_ID.yaml
+    # echo "Deploying IPFS Node for $ORG_NAME ($ORG_ID)..."
+    # sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/ipfs-template.yml > ipfs-node-$ORG_ID.yaml
+    # kubectl apply -f ipfs-node-$ORG_ID.yaml
+    # rm -f ipfs-node-$ORG_ID.yaml
 
-    echo "Deploying MongoDB for $ORG_NAME ($ORG_ID)..."
-    sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/mongodb-template.yml > mongodb-$ORG_ID.yaml
-    kubectl apply -f mongodb-$ORG_ID.yaml
-    rm -f mongodb-$ORG_ID.yaml
+    # echo "Deploying MongoDB for $ORG_NAME ($ORG_ID)..."
+    # sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/mongodb-template.yml > mongodb-$ORG_ID.yaml
+    # kubectl apply -f mongodb-$ORG_ID.yaml
+    # rm -f mongodb-$ORG_ID.yaml
 
     echo "Deploying Peer Node for $ORG_NAME ($ORG_ID)..."
     sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/peer-template.yml > peer-$ORG_ID.yaml

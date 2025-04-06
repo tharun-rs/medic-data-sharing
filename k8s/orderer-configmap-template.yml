@@ -7,14 +7,14 @@ data:
     General:
       ListenAddress: 0.0.0.0
       ListenPort: 7050
-      LocalMSPDir: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}.example.com/msp
+      LocalMSPDir: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}/msp
       LocalMSPID: OrdererMSP
       TLS:
         Enabled: true
-        PrivateKey: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}.example.com/tls/server.key
-        Certificate: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}.example.com/tls/server.crt
+        PrivateKey: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}/tls/server.key
+        Certificate: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}/tls/server.crt
         RootCAs:
-          - /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}.example.com/tls/ca.crt
+          - /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}/tls/ca.crt
     FileLedger:
       Location: /etc/hyperledger/production
 

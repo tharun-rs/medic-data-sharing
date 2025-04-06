@@ -40,9 +40,9 @@ spec:
             - name: ORG_ID_FOR_FOLDERS
               value: "{{ORG_ID}}"
             - name: CORE_PEER_ADDRESS
-              value: "peer0.{{ORG_ID}}.example.com:7051"
+              value: "peer0{{ORG_ID}}:7051"
             - name: ORDERER_ADDRESS
-              value: "orderer.example.com:7050"
+              value: "orderer.example.com:7050" ##figure this out later
             - name: BOOTSTRAP_NODE_IP
               value: "bootstrap"
             - name: PEER_PORT_NUMBER

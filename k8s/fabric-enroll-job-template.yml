@@ -20,18 +20,18 @@ spec:
             fabric-ca-client enroll -u http://admin:adminpw@fabric-ca:7054
 
             # 2. PEER ENROLLMENT
-            echo "Registering peer0.{{ORG_ID}}..."
-            fabric-ca-client register --id.name peer0.{{ORG_ID}} --id.secret peer0pw --id.type peer --id.attrs '"hf.Registrar.Roles=peer,client"'
+            echo "Registering peer0{{ORG_ID}}..."
+            fabric-ca-client register --id.name peer0{{ORG_ID}} --id.secret peer0pw --id.type peer --id.attrs '"hf.Registrar.Roles=peer,client"'
             
             # MSP Enrollment
-            fabric-ca-client enroll -u http://peer0.{{ORG_ID}}:peer0pw@fabric-ca:7054 \
-              -M /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/peers/peer0.{{ORG_ID}}.example.com/msp
+            fabric-ca-client enroll -u http://peer0{{ORG_ID}}:peer0pw@fabric-ca:7054 \
+              -M /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/peers/peer0{{ORG_ID}}/msp
             
             # TLS Enrollment
-            fabric-ca-client enroll -u http://peer0.{{ORG_ID}}:peer0pw@fabric-ca:7054 \
+            fabric-ca-client enroll -u http://peer0{{ORG_ID}}:peer0pw@fabric-ca:7054 \
               --enrollment.profile tls \
-              -M /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/peers/peer0.{{ORG_ID}}.example.com/tls \
-              --csr.hosts peer0.{{ORG_ID}}.example.com
+              -M /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/peers/peer0{{ORG_ID}}/tls \
+              --csr.hosts peer0{{ORG_ID}}
 
             # 3. ORDERER ENROLLMENT (create one orderer per peer org)
             ORDERER_NUM=$(echo "{{ORG_ID}}" | sed 's/org//')  # Extracts 1, 2, or 3 from org1, org2, org3
@@ -42,13 +42,13 @@ spec:
               
             # Orderer MSP
             fabric-ca-client enroll -u http://${ORDERER_NAME}:ordererpw@fabric-ca:7054 \
-              -M /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}.example.com/msp
+              -M /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}/msp
             
             # Orderer TLS
             fabric-ca-client enroll -u http://${ORDERER_NAME}:ordererpw@fabric-ca:7054 \
               --enrollment.profile tls \
-              -M /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}.example.com/tls \
-              --csr.hosts ${ORDERER_NAME}.example.com
+              -M /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}/tls \
+              --csr.hosts ${ORDERER_NAME}
 
             # Create Orderer Org MSP config (only once)
             if [ "{{ORG_ID}}" = "org1" ]; then
@@ -74,38 +74,38 @@ spec:
 
             # Copy orderer config.yaml to orderer MSP
             cp /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/msp/config.yaml \
-              /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}.example.com/msp/
+              /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}/msp/
 
             # Rename/copy private key and cert to fixed names for easier config mapping
-            cp /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}.example.com/tls/keystore/* \
-              /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}.example.com/tls/server.key
+            cp /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}/tls/keystore/* \
+              /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}/tls/server.key
 
-            cp /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}.example.com/tls/signcerts/cert.pem \
-              /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}.example.com/tls/server.crt
+            cp /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}/tls/signcerts/cert.pem \
+              /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}/tls/server.crt
 
-            cp /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}.example.com/tls/tlscacerts/*.pem \
-              /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}.example.com/tls/ca.crt
+            cp /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}/tls/tlscacerts/*.pem \
+              /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_NAME}/tls/ca.crt
 
 
             # 4. CREATE PEER ORG CONFIG.YAML
-            mkdir -p /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/msp
-            echo "NodeOUs:" > /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/msp/config.yaml
-            echo "  Enable: true" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/msp/config.yaml
-            echo "  ClientOUIdentifier:" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/msp/config.yaml
-            echo "    Certificate: cacerts/fabric-ca-7054.pem" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/msp/config.yaml
-            echo "    OrganizationalUnitIdentifier: client" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/msp/config.yaml
-            echo "  PeerOUIdentifier:" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/msp/config.yaml
-            echo "    Certificate: cacerts/fabric-ca-7054.pem" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/msp/config.yaml
-            echo "    OrganizationalUnitIdentifier: peer" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/msp/config.yaml
-            echo "  AdminOUIdentifier:" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/msp/config.yaml
-            echo "    Certificate: cacerts/fabric-ca-7054.pem" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/msp/config.yaml
-            echo "    OrganizationalUnitIdentifier: admin" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/msp/config.yaml
-            echo "  OrdererOUIdentifier:" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/msp/config.yaml
-            echo "    Certificate: cacerts/fabric-ca-7054.pem" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/msp/config.yaml
-            echo "    OrganizationalUnitIdentifier: orderer" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/msp/config.yaml
+            mkdir -p /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp
+            echo "NodeOUs:" > /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "  Enable: true" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "  ClientOUIdentifier:" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "    Certificate: cacerts/fabric-ca-7054.pem" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "    OrganizationalUnitIdentifier: client" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "  PeerOUIdentifier:" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "    Certificate: cacerts/fabric-ca-7054.pem" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "    OrganizationalUnitIdentifier: peer" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "  AdminOUIdentifier:" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "    Certificate: cacerts/fabric-ca-7054.pem" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "    OrganizationalUnitIdentifier: admin" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "  OrdererOUIdentifier:" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "    Certificate: cacerts/fabric-ca-7054.pem" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "    OrganizationalUnitIdentifier: orderer" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
 
-            cp /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/msp/config.yaml \
-              /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}.example.com/peers/peer0.{{ORG_ID}}.example.com/msp/
+            cp /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml \
+              /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/peers/peer0{{ORG_ID}}/msp/
 
 
             echo "Enrollment completed for {{ORG_ID}}!"
