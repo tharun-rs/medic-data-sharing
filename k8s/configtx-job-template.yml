@@ -68,6 +68,35 @@ spec:
             echo "      Rule: \"ANY Writers\"" >> $CONFIGTX_FILE
             echo "  Capabilities:" >> $CONFIGTX_FILE
             echo "    <<: *OrdererCapabilities" >> $CONFIGTX_FILE
+            echo "  EtcdRaft:" >> $CONFIGTX_FILE
+            echo "    Consenters:" >> $CONFIGTX_FILE
+            for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
+                ORDERER_NUM=$(echo "${ORG_ID}" | sed 's/org//')  # Extracts 1, 2, or 3 from org1, org2, org3
+                echo "      - Host: orderer${ORDERER_NUM}" >> $CONFIGTX_FILE
+                echo "        Port: 7050" >> $CONFIGTX_FILE
+                echo "        ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer${ORDERER_NUM}/tls/server.crt" >> $CONFIGTX_FILE
+                echo "        ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer${ORDERER_NUM}/tls/server.crt" >> $CONFIGTX_FILE
+            done
+            echo "  Organizations:" >> $CONFIGTX_FILE
+            echo "  - &OrdererOrg" >> $CONFIGTX_FILE
+            echo "    Name: OrdererMSP" >> $CONFIGTX_FILE
+            echo "    ID: OrdererMSP" >> $CONFIGTX_FILE
+            echo "    MSPDir: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/msp" >> $CONFIGTX_FILE
+            echo "    Policies:" >> $CONFIGTX_FILE
+            echo "      Readers:" >> $CONFIGTX_FILE
+            echo "        Type: Signature" >> $CONFIGTX_FILE
+            echo "        Rule: \"OR('OrdererMSP.member')\"" >> $CONFIGTX_FILE
+            echo "      Writers:" >> $CONFIGTX_FILE
+            echo "        Type: Signature" >> $CONFIGTX_FILE
+            echo "        Rule: \"OR('OrdererMSP.member')\"" >> $CONFIGTX_FILE
+            echo "      Admins:" >> $CONFIGTX_FILE
+            echo "        Type: Signature" >> $CONFIGTX_FILE
+            echo "        Rule: \"OR('OrdererMSP.admin')\"" >> $CONFIGTX_FILE
+            echo "    OrdererEndpoints:" >> $CONFIGTX_FILE
+            for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
+                ORDERER_NUM=$(echo "${ORG_ID}" | sed 's/org//')
+                echo "      - orderer${ORDERER_NUM}:7050" >> $CONFIGTX_FILE
+            done
 
             echo "Application: &ApplicationDefaults" >> $CONFIGTX_FILE
             echo "  Policies:" >> $CONFIGTX_FILE
@@ -102,7 +131,7 @@ spec:
                 echo "  - &${ORG_NAME}MSP" >> $CONFIGTX_FILE
                 echo "    Name: ${ORG_NAME}MSP" >> $CONFIGTX_FILE
                 echo "    ID: ${ORG_NAME}MSP" >> $CONFIGTX_FILE
-                echo "    MSPDir: /etc/hyperledger/fabric/crypto-config/peerOrganizations/${ORG_ID}/peers/peer0${ORG_ID}/msp" >> $CONFIGTX_FILE
+                echo "    MSPDir: /etc/hyperledger/fabric/crypto-config/peerOrganizations/${ORG_ID}/msp" >> $CONFIGTX_FILE
                 echo "    Policies:" >> $CONFIGTX_FILE
                 echo "      Readers:" >> $CONFIGTX_FILE
                 echo "        Type: Signature" >> $CONFIGTX_FILE
@@ -122,7 +151,7 @@ spec:
             echo "  - &OrdererOrg" >> $CONFIGTX_FILE
             echo "    Name: OrdererMSP" >> $CONFIGTX_FILE
             echo "    ID: OrdererMSP" >> $CONFIGTX_FILE
-            echo "    MSPDir: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer1/msp" >> $CONFIGTX_FILE
+            echo "    MSPDir: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/msp" >> $CONFIGTX_FILE
             echo "    Policies:" >> $CONFIGTX_FILE
             echo "      Readers:" >> $CONFIGTX_FILE
             echo "        Type: Signature" >> $CONFIGTX_FILE
@@ -135,24 +164,15 @@ spec:
             echo "        Rule: \"OR('OrdererMSP.admin')\"" >> $CONFIGTX_FILE
             echo "    OrdererEndpoints:" >> $CONFIGTX_FILE
             for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
-                echo "      - orderer${ORG_ID}:7050" >> $CONFIGTX_FILE
+                ORDERER_NUM=$(echo "${ORG_ID}" | sed 's/org//')
+                echo "      - orderer${ORDERER_NUM}:7050" >> $CONFIGTX_FILE
             done
 
             # ========== ORDERER SECTION ========== #
-            ORDERER_NUM=$(echo "${ORG_ID}" | sed 's/org//')  # Extracts 1, 2, or 3 from org1, org2, org3
 
-            echo "Orderer:" >> $CONFIGTX_FILE
-            echo "  <<: *OrdererDefaults" >> $CONFIGTX_FILE
-            echo "  EtcdRaft:" >> $CONFIGTX_FILE
-            echo "    Consenters:" >> $CONFIGTX_FILE
-            for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
-                echo "      - Host: orderer${ORG_ID}" >> $CONFIGTX_FILE
-                echo "        Port: 7050" >> $CONFIGTX_FILE
-                echo "        ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer${ORDERER_NUM}/tls/signcerts/cert.pem" >> $CONFIGTX_FILE
-                echo "        ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer${ORDERER_NUM}/tls/signcerts/cert.pem" >> $CONFIGTX_FILE
-            done
-            echo "  Organizations:" >> $CONFIGTX_FILE
-            echo "    - *OrdererOrg" >> $CONFIGTX_FILE
+            #echo "Orderer:" >> $CONFIGTX_FILE
+            #echo "  <<: *OrdererDefaults" >> $CONFIGTX_FILE
+
 
             # ========== PROFILES ========== #
             echo "Profiles:" >> $CONFIGTX_FILE
@@ -163,10 +183,11 @@ spec:
             echo "      EtcdRaft:" >> $CONFIGTX_FILE
             echo "        Consenters:" >> $CONFIGTX_FILE
             for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
-                echo "          - Host: orderer${ORG_ID}" >> $CONFIGTX_FILE
+                ORDERER_NUM=$(echo "${ORG_ID}" | sed 's/org//')
+                echo "          - Host: orderer${ORDERER_NUM}" >> $CONFIGTX_FILE
                 echo "            Port: 7050" >> $CONFIGTX_FILE
-                echo "            ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer${ORDERER_NUM}/tls/signcerts/cert.pem" >> $CONFIGTX_FILE
-                echo "            ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer${ORDERER_NUM}/tls/signcerts/cert.pem" >> $CONFIGTX_FILE
+                echo "            ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer${ORDERER_NUM}/tls/server.crt" >> $CONFIGTX_FILE
+                echo "            ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer${ORDERER_NUM}/tls/server.crt" >> $CONFIGTX_FILE
             done
             echo "      Organizations:" >> $CONFIGTX_FILE
             echo "        - *OrdererOrg" >> $CONFIGTX_FILE
@@ -180,6 +201,19 @@ spec:
 
             echo "  MultiOrgChannel:" >> $CONFIGTX_FILE
             echo "    <<: *ChannelDefaults" >> $CONFIGTX_FILE
+            echo "    Orderer:" >> $CONFIGTX_FILE
+            echo "      <<: *OrdererDefaults" >> $CONFIGTX_FILE
+            echo "      EtcdRaft:" >> $CONFIGTX_FILE
+            echo "        Consenters:" >> $CONFIGTX_FILE
+            for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
+                ORDERER_NUM=$(echo "${ORG_ID}" | sed 's/org//')
+                echo "          - Host: orderer${ORDERER_NUM}" >> $CONFIGTX_FILE
+                echo "            Port: 7050" >> $CONFIGTX_FILE
+                echo "            ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer${ORDERER_NUM}/tls/server.crt" >> $CONFIGTX_FILE
+                echo "            ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer${ORDERER_NUM}/tls/server.crt" >> $CONFIGTX_FILE
+            done
+            echo "      Organizations:" >> $CONFIGTX_FILE
+            echo "        - *OrdererOrg" >> $CONFIGTX_FILE
             echo "    Consortium: SampleConsortium" >> $CONFIGTX_FILE
             echo "    Application:" >> $CONFIGTX_FILE
             echo "      <<: *ApplicationDefaults" >> $CONFIGTX_FILE

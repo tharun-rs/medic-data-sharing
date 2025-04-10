@@ -13,8 +13,6 @@ spec:
         env:
         - name: FABRIC_CFG_PATH
           value: /etc/hyperledger/fabric/
-        - name: FABRIC_LOGGING_SPEC
-          value: DEBUG
         args:
           - |
             mkdir -p /etc/hyperledger/fabric/config

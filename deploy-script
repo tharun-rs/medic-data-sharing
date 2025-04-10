@@ -6,6 +6,8 @@ if [ "$1" == "stop" ]; then
     kubectl delete deployments --all
     kubectl delete services --all
     kubectl delete jobs --all
+    kubectl delete configmaps --all
+    kubectl delete secrets --all
     sudo rm -rf /home/tharunrs/fabric-data/*
     exit 0
 fi
@@ -29,7 +31,21 @@ ORG_IDS=$(echo ${!ORGS[@]} | tr ' ' ',')
 # Create a PVC for crypto materials
 kubectl apply -f k8s/pvc.yml
 
+#generate cert for fabric-ca
+#  Run the following command to generate TLS certificates for Fabric CA only once
+if [ ! -f tls-cert.pem ] || [ ! -f tls-key.pem ]; then
+    openssl req -newkey rsa:2048 -nodes -keyout tls-key.pem \
+        -x509 -days 365 -out tls-cert.pem \
+        -subj "/CN=fabric-ca" \
+        -addext "subjectAltName = DNS:fabric-ca, DNS:fabric-ca.default.svc.cluster.local" \
+        -addext "extendedKeyUsage = serverAuth, clientAuth" \
+        -addext "keyUsage = digitalSignature, keyEncipherment"
+fi
+
+kubectl create secret generic fabric-ca-tls --from-file=tls-cert.pem --from-file=tls-key.pem
+
 # Deploy Fabric CA
+kubectl create configmap fabric-ca-config --from-file=k8s/fabric-ca-server-config.yaml
 kubectl apply -f k8s/fabric-ca.yml
 
 echo "waiting for Fabric CA to be ready..."
@@ -108,10 +124,10 @@ for ORG_ID in "${!ORGS[@]}"; do
     # kubectl apply -f mongodb-$ORG_ID.yaml
     # rm -f mongodb-$ORG_ID.yaml
 
-    echo "Deploying Peer Node for $ORG_NAME ($ORG_ID)..."
-    sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/peer-template.yml > peer-$ORG_ID.yaml
-    kubectl apply -f peer-$ORG_ID.yaml
-    rm -f peer-$ORG_ID.yaml
+    # echo "Deploying Peer Node for $ORG_NAME ($ORG_ID)..."
+    # sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/peer-template.yml > peer-$ORG_ID.yaml
+    # kubectl apply -f peer-$ORG_ID.yaml
+    # rm -f peer-$ORG_ID.yaml
 
     echo "Deploying Orderer Node for $ORG_NAME ($ORG_ID)..."
     sed -e "s/{{ORG_ID}}/$ORG_ID/g" -e "s/{{ORDERER_ID}}/$ORDERER_ID/g" k8s/orderer-template.yml > orderer-$ORG_ID.yaml
@@ -121,7 +137,7 @@ done
 
 # Wait for peer and orderer deployments to be ready
 echo "Waiting for all deployments to be ready..."
-sleep 30  # Adjust time as needed
+sleep 10  # Adjust time as needed
 
 # Create the Fabric channel
 echo "Creating Fabric channel..."

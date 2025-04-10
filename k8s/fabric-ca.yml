@@ -6,6 +6,10 @@ spec:
   ports:
     - protocol: TCP
       port: 7054
+      name: http
+    - protocol: TCP
+      port: 7055
+      name: https
   selector:
     app: fabric-ca
 ---
@@ -25,19 +29,44 @@ spec:
     spec:
       containers:
         - name: fabric-ca
-          image: hyperledger/fabric-ca:latest
+          image: hyperledger/fabric-ca:1.5.15
+          command: ["sh", "-c"]
+          args:
+            - |
+              mkdir -p /etc/hyperledger/fabric-ca-server
+              # Initialize CA if no DB exists
+              if [ ! -f /etc/hyperledger/fabric-ca-server/fabric-ca-server.db ]; then
+                fabric-ca-server init -b admin:adminpw --csr.hosts fabric-ca,fabric-ca.default.svc.cluster.local
+              fi
+              
+              # Verify TLS certs exist (should be mounted via Secret)
+              if [ ! -f /etc/hyperledger/fabric-ca-server-tls/tls-key.pem ]; then
+                echo "ERROR: Missing TLS key file!"
+                exit 1
+              fi
+              
+              # Start the server
+              
+              fabric-ca-server start -b admin:adminpw -c /etc/hyperledger/fabric-ca-server/fabric-ca-server-config.yaml
           ports:
-            - containerPort: 7054
-          env:
-            - name: FABRIC_CA_HOME
-              value: /etc/hyperledger/fabric-ca-server
-            - name: FABRIC_CA_SERVER_CA_NAME
-              value: fabric-ca
-            - name: FABRIC_CA_SERVER_PORT
-              value: "7054"
+            - containerPort: 7055
           volumeMounts:
             - name: ca-data
-              mountPath: /etc/hyperledger/fabric-ca-server
+              mountPath: /etc/hyperledger/
+            - name: ca-tls
+              mountPath: /etc/hyperledger/fabric-ca-server-tls
+            - name: ca-config
+              mountPath: /etc/hyperledger/fabric-ca-server/fabric-ca-server-config.yaml
+              subPath: fabric-ca-server-config.yaml
+
       volumes:
         - name: ca-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: fabric-pvc
+        - name: ca-tls
+          secret:
+            secretName: fabric-ca-tls
+        - name: ca-config
+          configMap:
+            name: fabric-ca-config
+---

@@ -5,13 +5,18 @@ metadata:
 spec:
   containers:
   - name: debug
-    image: alpine
+    image: alpine:latest
     command: ["/bin/sh", "-c", "sleep 3600"]
     volumeMounts:
-    - name: crypto-material
-      mountPath: /etc/hyperledger/fabric/
+        - name: fabric-data
+          mountPath: /etc/hyperledger/fabric
+        - name: core-config
+          mountPath: /etc/hyperledger/fabric/config
+  restartPolicy: Never
   volumes:
-  - name: crypto-material
+  - name: fabric-data
     persistentVolumeClaim:
       claimName: fabric-pvc
-  restartPolicy: Never
+  - name: core-config
+    configMap:
+      name: temp-core

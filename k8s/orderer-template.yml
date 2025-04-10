@@ -22,19 +22,22 @@ spec:
             export ORDERER_GENERAL_LISTENPORT=7050
             export ORDERER_GENERAL_LOCALMSPID=OrdererMSP
             export ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}/msp
-            export ORDERER_GENERAL_GENESISPROFILE=SampleSingleMSPChannel
-            export ORDERER_GENERAL_BOOTSTRAPFILE=/etc/hyperledger/fabric/crypto-config/genesis.block
+            export ORDERER_GENERAL_GENESISPROFILE=MultiOrgOrdererGenesis
+            export ORDERER_GENERAL_BOOTSTRAPFILE=/etc/hyperledger/fabric/config/genesis.block
 
             orderer
         env:
         - name: FABRIC_LOGGING_SPEC
-          value: "INFO"
+          value: "DEBUG"
         - name: ORDERER_GENERAL_TLS_ENABLED
           value: "true"
         - name: FABRIC_CFG_PATH
           value: "/etc/hyperledger/fabric"
+        - name: ORDERER_GENERAL_GENESISFILE
+          value: /etc/hyperledger/fabric/config/genesis.block
         ports:
         - containerPort: 7050
+        - containerPort: 9443
         volumeMounts:
         - name: crypto-material
           mountPath: /etc/hyperledger/fabric/
@@ -65,3 +68,8 @@ spec:
     - protocol: TCP
       port: 7050
       targetPort: 7050
+      name: grpc
+    - protocol: TCP
+      port: 9443
+      targetPort: 9443
+      name: grpc-admin

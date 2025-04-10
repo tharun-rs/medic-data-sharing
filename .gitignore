@@ -4,3 +4,7 @@ ipfs/blockstore/
 ipfs/datastore/
 architecture
 *.env
+bin/*
+builders/*
+config/*
+tls-*
