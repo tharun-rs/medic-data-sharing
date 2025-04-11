@@ -96,6 +96,10 @@ spec:
               --csr.hosts peer0{{ORG_ID}} \
               --caname fabric-ca \
               --tls.certfiles /etc/hyperledger/fabric-ca-server-tls/tls-cert.pem
+            
+            #rename key to be used in the config
+            cp /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/peers/peer0{{ORG_ID}}/tls/keystore/* \
+              /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/peers/peer0{{ORG_ID}}/tls/keystore/key.pem
 
             # msp config.yaml
             mkdir -p /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp
