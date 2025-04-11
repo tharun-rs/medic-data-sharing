@@ -141,7 +141,7 @@ sleep 10  # Adjust time as needed
 
 # Create the Fabric channel
 echo "Creating Fabric channel..."
-sed -e "s/{{ORDERER_ID}}/orderer1/g" k8s/create-channel-template.yml > create-channel.yaml
+sed -e "s/{{NO_OF_ORDERERS}}/${#ORGS[@]}/g" k8s/create-channel-template.yml > create-channel.yaml
 kubectl apply -f create-channel.yaml
 rm -f create-channel.yaml
 

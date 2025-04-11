@@ -36,77 +36,20 @@ spec:
         args:
           - |
 
-            # configtxgen \
-            #   -profile MultiOrgChannel \
-            #   -outputCreateChannelTx /etc/hyperledger/fabric/configtx/channel.tx \
-            #   -channelID mychannel
-
-
-            # export CORE_PEER_LOCALMSPID=ORG1MSP
-            # export CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/crypto-config/peerOrganizations/org1/peers/peer0org1/msp
-
-            # peer channel create \
-            #   -o {{ORDERER_ID}}:7050 \
-            #   -c mychannel \
-            #   -f /etc/hyperledger/fabric/configtx/channel.tx \
-            #   --tls \
-            #   --cafile /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/{{ORDERER_ID}}/tls/tlscacerts/tls-fabric-ca-7054.pem \
-            #   --outputBlock /etc/hyperledger/fabric/mychannel.block
-
             configtxgen -profile MultiOrgChannel -outputBlock /etc/hyperledger/fabric/configtx/mychannel.block -channelID mychannel
 
             cp /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/keystore/*_sk \
               /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/keystore/key.pem
-
-            # osnadmin channel join \
-            #   -o {{ORDERER_ID}}:9443 \
-            #   --channelID mychannel \
-            #   --config-block /etc/hyperledger/fabric/configtx/mychannel.block \
-            #   --ca-file /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer1/tls/tlscacerts/tls-fabric-ca-7055-fabric-ca.pem \
-            #   --client-cert /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/signcerts/cert.pem \
-            #   --client-key /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/keystore/key.pem
-
-            osnadmin channel join \
-              -o orderer1:9443 \
-              --channelID mychannel \
-              --config-block /etc/hyperledger/fabric/configtx/mychannel.block \
-              --ca-file /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer1/tls/tlscacerts/tls-fabric-ca-7055-fabric-ca.pem \
-              --client-cert /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/signcerts/cert.pem \
-              --client-key /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/keystore/key.pem
-
-            osnadmin channel join \
-              -o orderer2:9443 \
-              --channelID mychannel \
-              --config-block /etc/hyperledger/fabric/configtx/mychannel.block \
-              --ca-file /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer1/tls/tlscacerts/tls-fabric-ca-7055-fabric-ca.pem \
-              --client-cert /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/signcerts/cert.pem \
-              --client-key /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/keystore/key.pem
-
-            # osnadmin channel join \
-            #   -o orderer3:9443 \
-            #   --channelID mychannel \
-            #   --config-block /etc/hyperledger/fabric/configtx/mychannel.block \
-            #   --ca-file /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer1/tls/tlscacerts/tls-fabric-ca-7055-fabric-ca.pem \
-            #   --client-cert /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/signcerts/cert.pem \
-            #   --client-key /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/keystore/key.pem \
-
-            osnadmin channel list \
-              -o orderer1:9443 \
-              --ca-file /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer1/tls/tlscacerts/tls-fabric-ca-7055-fabric-ca.pem \
-              --client-cert /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/signcerts/cert.pem \
-              --client-key /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/keystore/key.pem 
-
-            osnadmin channel list \
-              -o orderer2:9443 \
-              --ca-file /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer1/tls/tlscacerts/tls-fabric-ca-7055-fabric-ca.pem \
-              --client-cert /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/signcerts/cert.pem \
-              --client-key /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/keystore/key.pem 
-
-            osnadmin channel list \
-              -o orderer3:9443 \
-              --ca-file /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer1/tls/tlscacerts/tls-fabric-ca-7055-fabric-ca.pem \
-              --client-cert /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/signcerts/cert.pem \
-              --client-key /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/keystore/key.pem \
+            
+            for i in $(seq 1 {{NO_OF_ORDERERS}}); do   
+              osnadmin channel join \
+                -o orderer$i:9443 \
+                --channelID mychannel \
+                --config-block /etc/hyperledger/fabric/configtx/mychannel.block \
+                --ca-file /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer$i/tls/tlscacerts/tls-fabric-ca-7055-fabric-ca.pem \
+                --client-cert /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/signcerts/cert.pem \
+                --client-key /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/keystore/key.pem
+            done
 
         env:
         - name: FABRIC_CFG_PATH
