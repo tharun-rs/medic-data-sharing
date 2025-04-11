@@ -1,7 +1,7 @@
 {
-    "name": "data-upload-contract",
+    "name": "complaint-contract",
     "version": "1.0.0",
-    "description": "data-upload contract implemented in JavaScript",
+    "description": "Complaint contract implemented in JavaScript",
     "main": "index.js",
     "engines": {
         "node": ">=18"

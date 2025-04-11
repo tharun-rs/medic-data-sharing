@@ -1,0 +1,6 @@
+complainer_org ----> who's complaining
+complained_org ----> who's accused
+handling_authority
+file_id
+time_stamp
+complaint_status --> can be [in_progress, violation, no_violation]
