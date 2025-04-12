@@ -137,10 +137,4 @@ done
 echo "Waiting for all peers to join the channel..."
 sleep 10
 
-# Update anchor peers
-echo "Updating anchor peers for all organizations..."
-sed "s/{{ORG_IDS}}/$(echo ${!ORGS[@]} | tr ' ' ',')/g" k8s/update-anchor-peers-template.yml > update-anchor-peers.yaml
-kubectl apply -f update-anchor-peers.yaml
-rm -f update-anchor-peers.yaml
-
 echo "Fabric network setup completed successfully!"

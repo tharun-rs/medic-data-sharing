@@ -132,6 +132,9 @@ spec:
                 echo "    Name: ${ORG_NAME}MSP" >> $CONFIGTX_FILE
                 echo "    ID: ${ORG_NAME}MSP" >> $CONFIGTX_FILE
                 echo "    MSPDir: /etc/hyperledger/fabric/crypto-config/peerOrganizations/${ORG_ID}/msp" >> $CONFIGTX_FILE
+                echo "    AnchorPeers:" >> $CONFIGTX_FILE
+                echo "      - Host: peer0${ORG_NAME}" >> $CONFIGTX_FILE
+                echo "        Port: 7051" >> $CONFIGTX_FILE
                 echo "    Policies:" >> $CONFIGTX_FILE
                 echo "      Readers:" >> $CONFIGTX_FILE
                 echo "        Type: Signature" >> $CONFIGTX_FILE

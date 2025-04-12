@@ -125,16 +125,16 @@ spec:
             echo "NodeOUs:" > /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
             echo "  Enable: true" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
             echo "  ClientOUIdentifier:" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
-            echo "    Certificate: cacerts/fabric-ca-7055-fabric-ca.pem" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "    Certificate: cacerts/ca-cert.pem" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
             echo "    OrganizationalUnitIdentifier: client" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
             echo "  PeerOUIdentifier:" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
-            echo "    Certificate: cacerts/fabric-ca-7055-fabric-ca.pem" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "    Certificate: cacerts/ca-cert.pem" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
             echo "    OrganizationalUnitIdentifier: peer" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
             echo "  AdminOUIdentifier:" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
-            echo "    Certificate: cacerts/fabric-ca-7055-fabric-ca.pem" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "    Certificate: cacerts/ca-cert.pem" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
             echo "    OrganizationalUnitIdentifier: admin" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
             echo "  OrdererOUIdentifier:" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
-            echo "    Certificate: cacerts/fabric-ca-7055-fabric-ca.pem" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
+            echo "    Certificate: cacerts/ca-cert.pem" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
             echo "    OrganizationalUnitIdentifier: orderer" >> /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml
 
             cp /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml \
@@ -145,6 +145,9 @@ spec:
 
             cp /etc/hyperledger/fabric/crypto-config/peerOrganization/{{ORG_ID}}/users/Admin@{{ORG_ID}}/msp/signcerts/cert.pem \
               /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/users/Admin@{{ORG_ID}}/msp/admincerts/
+
+            cp /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/users/Admin@{{ORG_ID}}/msp/cacerts/fabric-ca-7055-fabric-ca.pem \
+              /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/users/Admin@{{ORG_ID}}/msp/cacerts/ca-cert.pem
 
 
             #____________________________________________________________________________________________________________________________________
