@@ -120,14 +120,19 @@ rm -f create-channel.yaml
 
 # Wait for channel creation
 echo "Waiting for channel creation to complete..."
-sleep 10
+kubectl wait --for=condition=complete --timeout=30s job/create-channel
 
 # Have all peer nodes join the channel
-echo "Adding all peer nodes to the channel..."
-sed "s/{{ORG_IDS}}/$(echo ${!ORGS[@]} | tr ' ' ',')/g" k8s/join-channel-template.yml > join-channel.yaml
-kubectl apply -f join-channel.yaml
-rm -f join-channel.yaml
+for ORG_KEY in "${!ORGS[@]}"; do
+  ORG_NUM=${ORG_KEY//[^0-9]/}  # Removes non-numeric chars
+  JOB_NAME="join-peer0org${ORG_NUM}"
+  echo "joining peer0org${ORG_NUM} to channel"
+  echo "jobid: ${JOB_NAME}"
 
+  sed "s/{{ORG_NUM}}/${ORG_NUM}/g" k8s/join-channel-template.yml > k8s/${JOB_NAME}.yaml
+  kubectl apply -f k8s/${JOB_NAME}.yaml
+  rm -f k8s/${JOB_NAME}.yaml
+done
 # Wait for peers to join the channel
 echo "Waiting for all peers to join the channel..."
 sleep 10

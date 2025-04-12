@@ -126,7 +126,7 @@ spec:
 
             # Peer Organizations
             for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
-                ORG_NAME=$(echo "$ORG_ID" | tr '[:lower:]' '[:upper:]')
+                ORG_NAME=$(echo "$ORG_ID")
 
                 echo "  - &${ORG_NAME}MSP" >> $CONFIGTX_FILE
                 echo "    Name: ${ORG_NAME}MSP" >> $CONFIGTX_FILE
@@ -195,7 +195,7 @@ spec:
             echo "      SampleConsortium:" >> $CONFIGTX_FILE
             echo "        Organizations:" >> $CONFIGTX_FILE
             for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
-                ORG_NAME=$(echo "$ORG_ID" | tr '[:lower:]' '[:upper:]')
+                ORG_NAME=$(echo "$ORG_ID")
                 echo "          - *${ORG_NAME}MSP" >> $CONFIGTX_FILE
             done
 
@@ -229,7 +229,7 @@ spec:
             echo "          Rule: \"MAJORITY Admins\"" >> $CONFIGTX_FILE
             echo "      Organizations:" >> $CONFIGTX_FILE
             for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
-                ORG_NAME=$(echo "$ORG_ID" | tr '[:lower:]' '[:upper:]')
+                ORG_NAME=$(echo "$ORG_ID")
                 echo "        - *${ORG_NAME}MSP" >> $CONFIGTX_FILE
             done
 

@@ -26,11 +26,16 @@ spec:
 
             # 2. PEER ENROLLMENT
 
+            fabric-ca-client affiliation add {{ORG_ID}} \
+              --caname fabric-ca \
+              --tls.certfiles /etc/hyperledger/fabric-ca-server-tls/tls-cert.pem
+
             echo "Registering {{ORG_ID}} root  identity..."
             fabric-ca-client register \
               --id.name {{ORG_ID}}MSP \
               --id.secret peerpw \
               --id.type client \
+              --id.affiliation {{ORG_ID}} \
               --caname fabric-ca \
               --tls.certfiles /etc/hyperledger/fabric-ca-server-tls/tls-cert.pem
 
@@ -39,6 +44,19 @@ spec:
               --id.name {{ORG_ID}}Admin \
               --id.secret adminpw \
               --id.type admin \
+              --id.affiliation {{ORG_ID}} \
+              --caname fabric-ca \
+              --tls.certfiles /etc/hyperledger/fabric-ca-server-tls/tls-cert.pem
+
+            # 2. Then add attributes incrementally
+            fabric-ca-client identity modify {{ORG_ID}}Admin \
+              --attrs 'hf.Revoker=true,hf.GenCRL=true' \
+              --caname fabric-ca \
+              --tls.certfiles /etc/hyperledger/fabric-ca-server-tls/tls-cert.pem
+
+            # 3. Finally add admin privileges if needed
+            fabric-ca-client identity modify {{ORG_ID}}Admin \
+              --attrs 'hf.Admin=true,hf.Registrar.Roles=peer,client' \
               --caname fabric-ca \
               --tls.certfiles /etc/hyperledger/fabric-ca-server-tls/tls-cert.pem
 
@@ -47,6 +65,7 @@ spec:
               --id.name peer0{{ORG_ID}} \
               --id.secret peer0pw \
               --id.type peer \
+              --id.affiliation {{ORG_ID}} \
               --id.attrs '"hf.Registrar.Roles=peer,client"' \
               --caname fabric-ca \
               --tls.certfiles /etc/hyperledger/fabric-ca-server-tls/tls-cert.pem
@@ -120,6 +139,12 @@ spec:
 
             cp /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml \
               /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/peers/peer0{{ORG_ID}}/msp/
+            
+            cp /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/msp/config.yaml \
+              /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/users/Admin@{{ORG_ID}}/msp/
+
+            cp /etc/hyperledger/fabric/crypto-config/peerOrganization/{{ORG_ID}}/users/Admin@{{ORG_ID}}/msp/signcerts/cert.pem \
+              /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/users/Admin@{{ORG_ID}}/msp/admincerts/
 
 
             #____________________________________________________________________________________________________________________________________
@@ -128,13 +153,20 @@ spec:
             ORDERER_NUM=$(echo "{{ORG_ID}}" | sed 's/org//')  # Extracts 1, 2, or 3 from org1, org2, org3
             ORDERER_NAME="orderer${ORDERER_NUM}"
 
+            
+            fabric-ca-client affiliation add ordererOrg \
+              --caname fabric-ca \
+              --tls.certfiles /etc/hyperledger/fabric-ca-server-tls/tls-cert.pem
+
 
             if [ "{{ORG_ID}}" = "org1" ]; then
               echo "Registering and enrolling ordererOrgMSP identity..."
+
               fabric-ca-client register \
                 --id.name ordererOrgMSP \
                 --id.secret ordererpw \
                 --id.type client \
+                --id.affiliation ordererOrg \
                 --caname fabric-ca \
                 --tls.certfiles /etc/hyperledger/fabric-ca-server-tls/tls-cert.pem
 
@@ -150,6 +182,7 @@ spec:
               fabric-ca-client register \
                 --id.name ordererOrgAdmin \
                 --id.secret adminpw --id.type admin \
+                --id.affiliation ordererOrg \
                 --caname fabric-ca \
                 --tls.certfiles /etc/hyperledger/fabric-ca-server-tls/tls-cert.pem
 
@@ -183,6 +216,7 @@ spec:
             fabric-ca-client register \
               --id.name ${ORDERER_NAME} \
               --id.secret ordererpw \
+              --id.affiliation ordererOrg \
               --id.type orderer\
               --caname fabric-ca \
               --tls.certfiles /etc/hyperledger/fabric-ca-server-tls/tls-cert.pem

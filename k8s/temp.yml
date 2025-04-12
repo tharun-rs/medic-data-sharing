@@ -5,18 +5,18 @@ metadata:
 spec:
   containers:
   - name: debug
-    image: alpine:latest
+    image: hyperledger/fabric-ca:latest
     command: ["/bin/sh", "-c", "sleep 3600"]
     volumeMounts:
-        - name: fabric-data
-          mountPath: /etc/hyperledger/fabric
-        - name: core-config
-          mountPath: /etc/hyperledger/fabric/config
+      - name: fabric-data
+        mountPath: /etc/hyperledger/fabric
+      - name: fabric-ca-certs
+        mountPath: /etc/hyperledger/fabric-ca-server-tls
   restartPolicy: Never
   volumes:
-  - name: fabric-data
-    persistentVolumeClaim:
-      claimName: fabric-pvc
-  - name: core-config
-    configMap:
-      name: temp-core
+    - name: fabric-data
+      persistentVolumeClaim:
+        claimName: fabric-pvc
+    - name: fabric-ca-certs
+      secret:
+        secretName: fabric-ca-tls
