@@ -3,12 +3,12 @@ const path = require("path");
 const fs = require('fs');
 const crypto = require('crypto');
 const { downloadFile, downloadFileWithCID } = require('../../ipfsConn/FileManager');
-const { queryAuthorizationForPatient } = require('../../peerAdapter/authorizationContracts');
+// const { queryAuthorizationForPatient } = require('../../peerAdapter/authorizationContracts');
 const p2pNodeManager = require('../../p2pComm/p2pNodeManager');
-const { getAllPHIByFilters, getAllPHIByPatientID, getAllPIIByPatientID } = require("../../peerAdapter/dataUploadContracts");
-const { createPIIAccessRequestWithFileID, queryPIIAccessRequestsByFileID } = require("../../peerAdapter/piiContracts");
-const { createPHIAccessRequestWithFileID } = require("../../peerAdapter/phiContracts");
-
+// const { getAllPHIByFilters, getAllPHIByPatientID, getAllPIIByPatientID } = require("../../peerAdapter/dataUploadContracts");
+// const { createPIIAccessRequestWithFileID, queryPIIAccessRequestsByFileID } = require("../../peerAdapter/piiContracts");
+// const { createPHIAccessRequestWithFileID } = require("../../peerAdapter/phiContracts");
+const { queryAuthorizationForPatient, getAllPHIByPatientID, getAllPIIByPatientID } = require("../../peerAdapter/mockContracts");
 const router = express.Router();
 
 async function getFileHash(filePath, algorithm = 'sha256') {
@@ -101,7 +101,7 @@ router.post("/pii", async (req, res) => {
             //raise a access request
             //get node multiaddr
             const nodeMultiAddr = p2pNodeManager.p2pNode.getMultiaddrs();
-            await createPIIAccessRequestWithFileID(patientId, fileId, dataCustodian, process.env.ORG_NAME, nodeMultiAddr);
+            // await createPIIAccessRequestWithFileID(patientId, fileId, dataCustodian, process.env.ORG_NAME, nodeMultiAddr);
 
             const addr = queryResult[0].custodian_address;
             const { cid, aesKey, iv, extension } = await p2pNodeManager.sendRequest(addr, fileId, "pii", process.env.ORG_NAME);
@@ -171,7 +171,7 @@ router.post("/phi", async (req, res) => {
             //raise a access request
             //get node multiaddr
             const nodeMultiAddr = p2pNodeManager.p2pNode.getMultiaddrs();
-            await createPHIAccessRequestWithFileID(patientId, fileId, dataCustodian, process.env.ORG_NAME, nodeMultiAddr);
+            // await createPHIAccessRequestWithFileID(patientId, fileId, dataCustodian, process.env.ORG_NAME, nodeMultiAddr);
 
             const addr = queryResult[0].custodian_address;
             const { cid, aesKey, iv, extension } = await p2pNodeManager.sendRequest(addr, fileId, "phi", process.env.ORG_NAME);

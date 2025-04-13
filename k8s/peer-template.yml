@@ -190,6 +190,8 @@ spec:
         - name: peer-core-config
           mountPath: /etc/hyperledger/fabric/core.yaml
           subPath: core.yaml
+        - name: chaincode
+          mountPath: /chaincode
       volumes:
       - name: crypto-material
         persistentVolumeClaim:
@@ -197,6 +199,9 @@ spec:
       - name: peer-core-config
         configMap:
           name: peer-core-config-{{ORG_ID}}
+      - name: chaincode
+        persistentVolumeClaim:
+          claimName: chaincodes-pvc
 
 
 ---

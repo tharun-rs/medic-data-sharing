@@ -28,6 +28,42 @@ async function getIPFSKeysCollection() {
 }
 
 /**
+ * Retrieves the authorization collection.
+ * @returns {Promise<Collection>} - Authorization collection
+ */
+async function getAuthorizationCollection() {
+    const db = await connectDB();
+    return db.collection('authorization');
+}
+
+/**
+ * Retrieves the pii collection.
+ * @returns {Promise<Collection>} - PII collection
+ */
+async function getPIICollection() {
+    const db = await connectDB();
+    return db.collection('pii');
+}
+
+/**
+ * Retrieves the phi collection.
+ * @returns {Promise<Collection>} - PHI collection
+ */
+async function getPHICollection() {
+    const db = await connectDB();
+    return db.collection('phi');
+}
+
+/**
+ * Retrieves the data collection.
+ * @returns {Promise<Collection>} - Data collection
+ */
+async function getDataCollection() {
+    const db = await connectDB();
+    return db.collection('data');
+}
+
+/**
  * Inserts a new document into the ipfsKeys collection.
  * @param {Object} fileMetadata - Metadata of the file to store.
  * @returns {Promise<Object>} - The result of the insert operation.
@@ -59,5 +95,9 @@ module.exports = {
     getWalletsCollection,
     getIPFSKeysCollection,
     insertIPFSKey,
-    getIPFSKeyByFileId
+    getIPFSKeyByFileId,
+    getAuthorizationCollection,
+    getPIICollection,
+    getPHICollection,
+    getDataCollection
 };

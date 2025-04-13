@@ -3,16 +3,14 @@ kind: PersistentVolume
 metadata:
   name: fabric-pv
 spec:
-  storageClassName: standard  # Match the PVC storage class
+  storageClassName: standard
   capacity:
     storage: 1Gi
   accessModes:
-    - ReadWriteOnce  # Change from RWX to RWO
+    - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
     path: "/home/tharunrs/fabric-data"
-
-
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -21,7 +19,34 @@ metadata:
 spec:
   storageClassName: standard
   accessModes:
-    - ReadWriteOnce  # Change from RWX to RWO
+    - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: chaincodes
+spec:
+  storageClassName: standard
+  capacity:
+    storage: 900Mi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/home/tharunrs/medic-data-sharing/blockchain/chaincode"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: chaincodes-pvc
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 900Mi
+---

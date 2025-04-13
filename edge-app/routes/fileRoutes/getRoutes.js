@@ -5,7 +5,7 @@ const { uploadFile } = require('../../ipfsConn/FileManager');
 const p2pNodeManager = require('../../p2pComm/p2pNodeManager');
 const crypto = require('crypto');
 const fs = require('fs');
-const { getAllPHIByFilters, getAllPHIByPatientID, getAllPIIByPatientID } = require("../../peerAdapter/dataUploadContracts");
+// const { getAllPHIByFilters, getAllPHIByPatientID, getAllPIIByPatientID } = require("../../peerAdapter/dataUploadContracts");
 
 const router = express.Router();
 

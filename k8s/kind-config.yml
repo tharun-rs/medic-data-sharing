@@ -6,3 +6,5 @@ nodes:
     extraMounts:
       - hostPath: /home/tharunrs/fabric-data
         containerPath: /home/tharunrs/fabric-data
+      - hostPath: /home/tharunrs/medic-data-sharing/blockchain/chaincode
+        containerPath: /home/tharunrs/medic-data-sharing/blockchain/chaincode

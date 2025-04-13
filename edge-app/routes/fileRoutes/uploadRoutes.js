@@ -2,11 +2,13 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const { uploadFile } = require('../../ipfsConn/FileManager');
-const { uploadAuthorization } = require('../../peerAdapter/authorizationContracts');
+// const { uploadAuthorization } = require('../../peerAdapter/authorizationContracts');
+const { uploadAuthorization } = require('../../peerAdapter/mockContracts');
 const p2pNodeManager = require('../../p2pComm/p2pNodeManager');
 const crypto = require('crypto');
 const fs = require('fs');
-const { uploadPIIRecord, uploadPHIRecord } = require("../../peerAdapter/dataUploadContracts");
+// const { uploadPIIRecord, uploadPHIRecord } = require("../../peerAdapter/dataUploadContracts");
+const { uploadPIIRecord, uploadPHIRecord } = require("../../peerAdapter/mockContracts");
 
 async function getFileHash(filePath, algorithm = 'sha256') {
     return new Promise((resolve, reject) => {
