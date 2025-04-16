@@ -84,6 +84,9 @@ class P2PNode {
     this.node.handle(protocol, async ({ stream }) => {
       const jsonData = await streamToJSON(stream);
       processFunction(jsonData);
+      if (stream && stream.sink && stream.sink.end) {
+        stream.sink.end(); // if using a proper duplex stream
+      }
     });
   }
 

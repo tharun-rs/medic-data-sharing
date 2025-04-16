@@ -1,6 +1,8 @@
 import axios from "axios";
 import FormData from "form-data";
 import fs from "fs";
+import crypto from "crypto";
+import path from "path";
 
 // Function to upload a file to a specific endpoint
 export async function uploadFile(endpoint, filePath, port, additionalData = {}) {
@@ -44,3 +46,41 @@ export async function uploadPHI(filePath, port, patientId, fileType, fileTag) {
     const additionalData = { patientId, fileType, fileTag };
     await uploadFile("upload/phi", filePath, port, additionalData);
 }
+
+
+
+/**
+ * Generate a random file with specified size and content.
+ * @param {string} filePath - Path to save the generated file.
+ * @param {number} sizeInBytes - Size of the file in bytes.
+ */
+export function generateRandomFile(filePath, sizeInBytes) {
+    const randomData = crypto.randomBytes(sizeInBytes);
+    fs.writeFileSync(filePath, randomData);
+
+    console.log(`Random file generated: ${filePath} (${sizeInBytes} bytes)`);
+}
+
+/**
+ * Upload a file to the IPFS server.
+ * @param {string} filePath - Path of the file to upload.
+ * @param {string} port - port of the IPFS upload endpoint.
+ * @returns {Promise<string>} - The CID of the uploaded file.
+ */
+export async function uploadFileToIPFS(filePath, port) {
+    try {
+
+        const uploadUrl = `http://localhost:${port}/upload`;
+        const file = fs.readFileSync(filePath);
+        const base64Data = file.toString("base64");
+
+        const response = await axios.post(uploadUrl, { fileData: base64Data });
+        console.log(`File uploaded successfully. CID: ${response.data.cid}`);
+        return response.data.cid;
+    } catch (error) {
+        console.error("Error uploading file to IPFS:", error.message);
+        throw error;
+    }
+}
+
+

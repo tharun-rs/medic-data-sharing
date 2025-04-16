@@ -10,7 +10,7 @@ const ipfsNode = new IPFSNode();
 await ipfsNode.initialize();
 
 // Middleware to parse JSON bodies
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '100mb' }));
 
 // Endpoint to upload file to IPFS
 app.post('/upload', async (req, res) => {

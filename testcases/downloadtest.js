@@ -1,6 +1,7 @@
 import axios from "axios";
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 
 /**
  * Ensure the directory exists before writing the file.
@@ -62,3 +63,19 @@ export async function downloadPIIFile(patientId, savePath, port) {
     await downloadFile("download/pii", requestData, savePath, port);
 }
 
+export async function downloadFromIPFS(cid, port, filePath) {
+    const apiUrl = `http://localhost:${port}/download/${cid}`;
+    try {
+        const response = await axios.get(apiUrl);
+        const { base64Data } = response.data;
+
+        // Decode the Base64 string back to a Buffer
+        const fileBuffer = Buffer.from(base64Data, 'base64');
+        ensureDirectoryExists(filePath); // Ensure the directory exists
+        fs.writeFileSync(filePath, fileBuffer); // Write the buffer to the specified file path
+        console.log(`File saved successfully to: ${filePath}`);
+    } catch (error) {
+        console.error(`Error downloading from IPFS:`, error.response ? error.response.data : error.message);
+        throw error;
+    }
+}

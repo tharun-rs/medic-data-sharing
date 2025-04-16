@@ -1,0 +1,11 @@
+Test 6:
+Uploading file to IPFS
+Random file generated: ./sampleFiles/testfile.txt (1048576 bytes)
+Expected response: {
+    message: 'File uploaded successfully',
+    cid: '<somecid>'
+}
+Actual Response: 
+_______________________________________________
+
+

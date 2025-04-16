@@ -8,6 +8,7 @@ const p2pNodeManager = require('../../p2pComm/p2pNodeManager');
 const { getAllPHIByFilters, getAllPHIByPatientID, getAllPIIByPatientID } = require("../../peerAdapter/dataUploadContracts");
 const { createPIIAccessRequestWithFileID, queryPIIAccessRequestsByFileID } = require("../../peerAdapter/piiContracts");
 const { createPHIAccessRequestWithFileID } = require("../../peerAdapter/phiContracts");
+const { uploadAuthorization } = require('../../peerAdapter/authorizationContracts');
 
 const router = express.Router();
 
@@ -212,6 +213,36 @@ router.post("/phi", async (req, res) => {
 
     } catch (error) {
         console.error("Error downloading file:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+router.get("/testTimings", async (req, res) => {
+    try {
+        const { patientId, requestor } = req.body;
+
+        const t_query_start = Date.now();
+        const queryResult = await queryAuthorizationForPatient(patientId, requestor);
+        console.log(queryResult);
+        const t_query_end = Date.now();
+
+        const addr = queryResult[0].custodian_address;
+        const fileId = queryResult[0].file_id;
+
+        const t_request_start = Date.now();
+        const { cid, aesKey, iv, extension } = await p2pNodeManager.sendRequest(addr, fileId);
+        const t_request_end = Date.now();
+
+        const T_transaction = t_query_end - t_query_start;         // in ms
+        const T_edge = t_request_end - t_request_start;   // in ms
+
+        res.json({
+            T_transaction,      // Time taken for `queryAuthorizationForPatient`
+            T_edge,    // Time taken for `sendRequest`
+        });
+    } catch (error) {
+        console.error("Error getting file:", error);
         res.status(500).json({ error: error.message });
     }
 });
