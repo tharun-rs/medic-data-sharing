@@ -1,0 +1,224 @@
+---
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+  Orderer: &OrdererCapabilities
+    V2_0: true
+  Application: &ApplicationCapabilities
+    V2_0: true
+Channel: &ChannelDefaults
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+  Capabilities:
+    <<: *ChannelCapabilities
+Orderer: &OrdererDefaults
+  OrdererType: etcdraft
+  Addresses:
+    - orderer3:7050
+    - orderer2:7050
+    - orderer1:7050
+  BatchTimeout: 2s
+  BatchSize:
+    MaxMessageCount: 10
+    AbsoluteMaxBytes: 99 MB
+    PreferredMaxBytes: 512 KB
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    BlockValidation:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+  Capabilities:
+    <<: *OrdererCapabilities
+  EtcdRaft:
+    Consenters:
+      - Host: orderer3
+        Port: 7050
+        ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer3/tls/server.crt
+        ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer3/tls/server.crt
+      - Host: orderer2
+        Port: 7050
+        ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer2/tls/server.crt
+        ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer2/tls/server.crt
+      - Host: orderer1
+        Port: 7050
+        ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer1/tls/server.crt
+        ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer1/tls/server.crt
+  Organizations:
+  - &OrdererOrg
+    Name: OrdererMSP
+    ID: OrdererMSP
+    MSPDir: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('OrdererMSP.admin')"
+    OrdererEndpoints:
+      - orderer3:7050
+      - orderer2:7050
+      - orderer1:7050
+Application: &ApplicationDefaults
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    LifecycleEndorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+    Endorsement:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Endorsement"
+  Capabilities:
+    <<: *ApplicationCapabilities
+Organizations:
+  - &org3MSP
+    Name: org3MSP
+    ID: org3MSP
+    MSPDir: /etc/hyperledger/fabric/crypto-config/peerOrganizations/org3/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('org3MSP.admin', 'org3MSP.peer', 'org3MSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('org3MSP.admin', 'org3MSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('org3MSP.admin')"
+  - &org2MSP
+    Name: org2MSP
+    ID: org2MSP
+    MSPDir: /etc/hyperledger/fabric/crypto-config/peerOrganizations/org2/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('org2MSP.admin', 'org2MSP.peer', 'org2MSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('org2MSP.admin', 'org2MSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('org2MSP.admin')"
+  - &org1MSP
+    Name: org1MSP
+    ID: org1MSP
+    MSPDir: /etc/hyperledger/fabric/crypto-config/peerOrganizations/org1/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('org1MSP.admin', 'org1MSP.peer', 'org1MSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('org1MSP.admin', 'org1MSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('org1MSP.admin')"
+  - &OrdererOrg
+    Name: OrdererMSP
+    ID: OrdererMSP
+    MSPDir: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('OrdererMSP.admin')"
+    OrdererEndpoints:
+      - orderer3:7050
+      - orderer2:7050
+      - orderer1:7050
+Profiles:
+  MultiOrgOrdererGenesis:
+    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      EtcdRaft:
+        Consenters:
+          - Host: orderer3
+            Port: 7050
+            ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer3/tls/server.crt
+            ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer3/tls/server.crt
+          - Host: orderer2
+            Port: 7050
+            ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer2/tls/server.crt
+            ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer2/tls/server.crt
+          - Host: orderer1
+            Port: 7050
+            ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer1/tls/server.crt
+            ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer1/tls/server.crt
+      Organizations:
+        - *OrdererOrg
+    Consortiums:
+      SampleConsortium:
+        Organizations:
+          - *org3MSP
+          - *org2MSP
+          - *org1MSP
+  MultiOrgChannel:
+    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      EtcdRaft:
+        Consenters:
+          - Host: orderer3
+            Port: 7050
+            ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer3/tls/server.crt
+            ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer3/tls/server.crt
+          - Host: orderer2
+            Port: 7050
+            ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer2/tls/server.crt
+            ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer2/tls/server.crt
+          - Host: orderer1
+            Port: 7050
+            ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer1/tls/server.crt
+            ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer1/tls/server.crt
+      Organizations:
+        - *OrdererOrg
+    Consortium: SampleConsortium
+    Application:
+      <<: *ApplicationDefaults
+      Policies:
+        Readers:
+          Type: ImplicitMeta
+          Rule: "ANY Readers"
+        Writers:
+          Type: ImplicitMeta
+          Rule: "ANY Writers"
+        Admins:
+          Type: ImplicitMeta
+          Rule: "MAJORITY Admins"
+      Organizations:
+        - *org3MSP
+        - *org2MSP
+        - *org1MSP

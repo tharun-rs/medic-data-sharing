@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: join-peer0org{{ORG_NUM}}
+spec:
+  template:
+    spec:
+      containers:
+        - name: cli
+          image: hyperledger/fabric-tools:latest
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -e
+              export FABRIC_CFG_PATH=/etc/hyperledger/fabric
+              export CORE_PEER_ADDRESS=peer0org{{ORG_NUM}}:7051
+              export CORE_PEER_LOCALMSPID=org{{ORG_NUM}}MSP
+              export CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/crypto-config/peerOrganizations/org{{ORG_NUM}}/users/Admin@org{{ORG_NUM}}/msp
+              export CORE_PEER_TLS_ENABLED=true
+              export CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/crypto-config/peerOrganizations/org{{ORG_NUM}}/peers/peer0org{{ORG_NUM}}/tls/tlscacerts/tls-fabric-ca-7055-fabric-ca.pem
+              export CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/crypto-config/peerOrganizations/org{{ORG_NUM}}/peers/peer0org{{ORG_NUM}}/tls/signcerts/cert.pem
+              export CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/crypto-config/peerOrganizations/org{{ORG_NUM}}/peers/peer0org{{ORG_NUM}}/tls/keystore/key.pem
+
+              peer channel join -b /etc/hyperledger/fabric/configtx/mychannel.block
+              echo "peer0org{{ORG_NUM}} joined channel successfully!"
+              peer channel list
+          env:
+          - name: FABRIC_CFG_PATH
+            value: /etc/hyperledger/fabric/
+          - name: FABRIC_LOGGING_SPEC
+            value: "DEBUG"
+          volumeMounts:
+            - name: fabric-data
+              mountPath: /etc/hyperledger/fabric
+            - name: peer-core-config
+              mountPath: /etc/hyperledger/fabric/core.yaml
+              subPath: core.yaml
+      restartPolicy: Never
+      volumes:
+        - name: fabric-data
+          persistentVolumeClaim:
+            claimName: fabric-pvc
+        - name: peer-core-config
+          configMap:
+            name: peer-core-config-org{{ORG_NUM}}
+  backoffLimit: 3

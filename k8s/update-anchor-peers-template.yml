@@ -1,0 +1,60 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: update-anchor-peers-{{ORG_NUM}}
+spec:
+  template:
+    spec:
+      containers:
+      - name: cli
+        image: hyperledger/fabric-tools:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            ORG_ID=org{{ORG_NUM}}
+            ORDERER_ID=orderer{{ORG_NUM}}
+            export FABRIC_CFG_PATH=/etc/hyperledger/fabric
+            echo "Updating anchor peer for ${ORG_ID}..."
+            export CORE_PEER_ADDRESS=peer0${ORG_ID}:7051
+            export CORE_PEER_LOCALMSPID=${ORG_ID}MSP
+            export CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/crypto-config/peerOrganizations/${ORG_ID}/users/Admin@${ORG_ID}/msp
+            export CORE_PEER_TLS_ENABLED=true
+            export CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/crypto-config/peerOrganizations/org{{ORG_NUM}}/peers/peer0org{{ORG_NUM}}/tls/tlscacerts/tls-fabric-ca-7055-fabric-ca.pem
+            export CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/crypto-config/peerOrganizations/org{{ORG_NUM}}/peers/peer0org{{ORG_NUM}}/tls/signcerts/cert.pem
+            export CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/crypto-config/peerOrganizations/org{{ORG_NUM}}/peers/peer0org{{ORG_NUM}}/tls/keystore/key.pem
+
+            peer channel list
+
+            configtxgen -profile MultiOrgChannel \
+              -outputAnchorPeersUpdate /etc/hyperledger/fabric/configtx/${ORG_ID}Anchor.tx \
+              -channelID mychannel \
+              -asOrg ${ORG_ID}MSP
+
+            peer channel fetch config config_block.pb -o ${ORDERER_ID}:7050 -c mychannel --tls --cafile /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_ID}/tls/tlscacerts/tls-fabric-ca-7055-fabric-ca.pem
+            configtxlator proto_decode --input config_block.pb --type common.Block --output config_block.json
+            jq .data.data[0].payload.data.config config_block.json > config.json
+
+            
+            peer channel update \
+              -o ${ORDERER_ID}:7050 \
+              -c mychannel \
+              -f /etc/hyperledger/fabric/configtx/${ORG_ID}Anchor.tx \
+              --tls \
+              --cafile /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/${ORDERER_ID}/tls/tlscacerts/tls-fabric-ca-7055-fabric-ca.pem
+            echo "Anchor peer updated for ${ORG_ID}!"
+
+        volumeMounts:
+          - name: fabric-data
+            mountPath: /etc/hyperledger/fabric
+          - name: peer-core-config
+            mountPath: /etc/hyperledger/fabric/core.yaml
+            subPath: core.yaml
+      restartPolicy: Never
+      volumes:
+      - name: fabric-data
+        persistentVolumeClaim:
+          claimName: fabric-pvc
+      - name: peer-core-config
+        configMap:
+          name: peer-core-config-org{{ORG_NUM}}
+  backoffLimit: 3

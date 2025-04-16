@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: generate-genesis-block
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: genesis-generator
+        image: hyperledger/fabric-tools:latest
+        command: ["/bin/sh", "-c"]
+        env:
+        - name: FABRIC_CFG_PATH
+          value: /etc/hyperledger/fabric/
+        args:
+          - |
+            mkdir -p /etc/hyperledger/fabric/config
+            configtxgen -profile MultiOrgOrdererGenesis -channelID system-channel -outputBlock /etc/hyperledger/fabric/config/genesis.block
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/hyperledger/fabric/
+      volumes:
+      - name: config-volume
+        persistentVolumeClaim:
+          claimName: fabric-pvc

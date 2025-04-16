@@ -1,0 +1,219 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: peer-core-config-{{ORG_ID}}
+data:
+  core.yaml: |
+
+    vm:
+      endpoint: unix:///var/run/docker.sock
+      docker:
+        tls:
+          enabled: false
+          ca:
+            file: docker/ca.crt
+          cert:
+            file: docker/tls.crt
+          key:
+            file: docker/tls.key
+        attachStdout: false
+        hostConfig:
+          NetworkMode: host
+          Dns:
+          LogConfig:
+            Type: json-file
+            Config:
+              max-size: "50m"
+              max-file: "5"
+          Memory: 2147483648
+    chaincode:
+      id:
+        path:
+        name:
+      builder: $(DOCKER_NS)/fabric-ccenv:$(TWO_DIGIT_VERSION)
+      pull: false
+
+      golang:
+        runtime: $(DOCKER_NS)/fabric-baseos:$(TWO_DIGIT_VERSION)
+        dynamicLink: false
+
+      java:
+        runtime: $(DOCKER_NS)/fabric-javaenv:2.5
+
+      node:
+        runtime: $(DOCKER_NS)/fabric-nodeenv:2.5
+      externalBuilders:
+        - name: ccaas_builder
+          path: /opt/hyperledger/ccaas_builder
+          propagateEnvironment:
+            - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG
+      installTimeout: 300s
+      startuptimeout: 300s
+      executetimeout: 30s
+      mode: net
+      keepalive: 0
+      system:
+        _lifecycle: enable
+        cscc: enable
+        lscc: enable
+        qscc: enable
+      logging:
+        level: info
+        shim: warning
+        format: "%{color}%{time:2006-01-02 15:04:05.000 MST} [%{module}] %{shortfunc} -> %{level:.4s} %{id:03x}%{color:reset} %{message}"
+      runtimeParams:
+        useWriteBatch: true
+        maxSizeWriteBatch: 1000
+        useGetMultipleKeys: true
+        maxSizeGetMultipleKeys: 1000
+    ledger:
+      blockchain:
+
+      state:
+        stateDatabase: goleveldb
+        totalQueryLimit: 100000
+        couchDBConfig:
+          couchDBAddress: 127.0.0.1:5984
+          username:
+          password:
+          maxRetries: 3
+          maxRetriesOnStartup: 10
+          requestTimeout: 35s
+          internalQueryLimit: 1000
+          maxBatchUpdateSize: 1000
+          createGlobalChangesDB: false
+          cacheSize: 64
+
+      history:
+        enableHistoryDatabase: true
+
+      pvtdataStore:
+        collElgProcMaxDbBatchSize: 5000
+        collElgProcDbBatchesInterval: 1000
+        deprioritizedDataReconcilerInterval: 60m
+        purgeInterval: 100
+        purgedKeyAuditLogging: true
+
+      snapshots:
+        rootDir: /etc/hyperledger/production/snapshots
+    operations:
+      listenAddress: 127.0.0.1:9443
+      tls:
+        enabled: false
+        cert:
+          file:
+        key:
+          file:
+        clientAuthRequired: false
+        clientRootCAs:
+          files: []
+    metrics:
+      provider: disabled
+      statsd:
+        network: udp
+        address: 127.0.0.1:8125
+        writeInterval: 10s
+        prefix:
+    peer:
+      id: peer0
+      networkId: dev
+      address: peer0{{ORG_ID}}:7051
+      listenAddress: 0.0.0.0:7051
+      chaincodeListenAddress: 0.0.0.0:7052
+      gomaxprocs: -1
+      gossip:
+        bootstrap: peer0org1:7051
+        useLeaderElection: false
+        orgLeader: true
+        endpoint: peer0{{ORG_ID}}:7051
+        externalEndpoint:
+        # Leader election service configuration
+        election:
+            # Longest time peer waits for stable membership during leader election startup (unit: second)
+            startupGracePeriod: 15s
+            # Interval gossip membership samples to check its stability (unit: second)
+            membershipSampleInterval: 1s
+            # Time passes since last declaration message before peer decides to perform leader election (unit: second)
+            leaderAliveThreshold: 10s
+            # Time between peer sends propose message and declares itself as a leader (sends declaration message) (unit: second)
+            leaderElectionDuration: 5s
+      tls:
+        enabled: true
+        cert:
+          file: /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/peers/peer0{{ORG_ID}}/tls/signcerts/cert.pem
+        key:
+          file: /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/peers/peer0{{ORG_ID}}/tls/keystore/key.pem
+        rootcert:
+          file: /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/peers/peer0{{ORG_ID}}/tls/tlscacerts/tls-fabric-ca-7055-fabric-ca.pem
+      mspConfigPath: /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/peers/peer0{{ORG_ID}}/msp
+      BCCSP:
+        Default: SW
+        sw:
+          Hash: SHA2
+          Security: 256
+          FileKeystore:
+            keyStore: /etc/hyperledger/fabric/crypto-config/peerOrganizations/{{ORG_ID}}/peers/peer0{{ORG_ID}}/msp/keystore
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: peer0{{ORG_ID}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: peer0{{ORG_ID}}
+  template:
+    metadata:
+      labels:
+        app: peer0{{ORG_ID}}
+    spec:
+      containers:
+      - name: peer
+        image: hyperledger/fabric-peer:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            peer node start
+        env:
+        - name: CORE_PEER_LOCALMSPID
+          value: {{ORG_ID}}MSP
+        - name: FABRIC_CFG_PATH
+          value: /etc/hyperledger/fabric/
+        - name: FABRIC_LOGGING_SPEC
+          value: "DEBUG"
+        ports:
+        - containerPort: 7051
+        volumeMounts:
+        - name: crypto-material
+          mountPath: /etc/hyperledger/fabric/
+        - name: peer-core-config
+          mountPath: /etc/hyperledger/fabric/core.yaml
+          subPath: core.yaml
+        - name: chaincode
+          mountPath: /chaincode
+      volumes:
+      - name: crypto-material
+        persistentVolumeClaim:
+          claimName: fabric-pvc
+      - name: peer-core-config
+        configMap:
+          name: peer-core-config-{{ORG_ID}}
+      - name: chaincode
+        persistentVolumeClaim:
+          claimName: chaincodes-pvc
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: peer0{{ORG_ID}}
+spec:
+  selector:
+    app: peer0{{ORG_ID}}
+  ports:
+    - protocol: TCP
+      port: 7051  # External port
+      targetPort: 7051  # Container port
+  type: ClusterIP

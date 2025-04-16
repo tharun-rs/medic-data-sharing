@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug-pod
+spec:
+  containers:
+  - name: debug
+    image: hyperledger/fabric-ca:latest
+    command: ["/bin/sh", "-c", "sleep 3600"]
+    volumeMounts:
+      - name: fabric-data
+        mountPath: /etc/hyperledger/fabric
+      - name: fabric-ca-certs
+        mountPath: /etc/hyperledger/fabric-ca-server-tls
+  restartPolicy: Never
+  volumes:
+    - name: fabric-data
+      persistentVolumeClaim:
+        claimName: fabric-pvc
+    - name: fabric-ca-certs
+      secret:
+        secretName: fabric-ca-tls

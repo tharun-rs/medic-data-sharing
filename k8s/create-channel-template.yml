@@ -1,0 +1,69 @@
+---
+# ConfigMap for core.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: temp-core
+data:
+  core.yaml: |
+    logging:
+      level: info
+
+    peer:
+      id: cli
+      localMspId: ORG1MSP
+      mspConfigPath: /etc/hyperledger/fabric/crypto-config/peerOrganizations/org1/peers/peer0org1/msp
+      BCCSP:
+        Default: SW
+        SW:
+          Hash: SHA2
+          Security: 256
+          FileKeyStore:
+            KeyStore: /etc/hyperledger/fabric/crypto-config/peerOrganizations/org1/peers/peer0org1/msp/keystore
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-channel
+spec:
+  template:
+    spec:
+      containers:
+      - name: cli
+        image: hyperledger/fabric-tools:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+
+            configtxgen -profile MultiOrgChannel -outputBlock /etc/hyperledger/fabric/configtx/mychannel.block -channelID mychannel
+
+            cp /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/keystore/*_sk \
+              /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/keystore/key.pem
+            
+            for i in $(seq 1 {{NO_OF_ORDERERS}}); do   
+              osnadmin channel join \
+                -o orderer$i:9443 \
+                --channelID mychannel \
+                --config-block /etc/hyperledger/fabric/configtx/mychannel.block \
+                --ca-file /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer$i/tls/tlscacerts/tls-fabric-ca-7055-fabric-ca.pem \
+                --client-cert /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/signcerts/cert.pem \
+                --client-key /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/keystore/key.pem
+            done
+
+        env:
+        - name: FABRIC_CFG_PATH
+          value: "/etc/hyperledger/fabric/config"
+        volumeMounts:
+        - name: fabric-data
+          mountPath: /etc/hyperledger/fabric
+        - name: core-config
+          mountPath: /etc/hyperledger/fabric/config
+      restartPolicy: Never
+      volumes:
+      - name: fabric-data
+        persistentVolumeClaim:
+          claimName: fabric-pvc
+      - name: core-config
+        configMap:
+          name: temp-core

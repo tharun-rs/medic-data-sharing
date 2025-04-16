@@ -1,0 +1,117 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orderer-config-{{ORDERER_ID}}
+data:
+  orderer.yaml: |
+    General:
+      ListenAddress: 0.0.0.0
+      ListenPort: 7050
+      LocalMSPDir: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}/msp
+      LocalMSPID: OrdererMSP
+      TLS:
+        Enabled: true
+        PrivateKey: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}/tls/server.key
+        Certificate: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}/tls/server.crt
+        RootCAs:
+        - /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/msp/tlscacerts/tls-cert.pem
+      Cluster:
+        ClientCertificate: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}/tls/server.crt
+        ClientPrivateKey: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}/tls/server.key
+        RootCAs:
+          - /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/msp/tlscacerts/tls-cert.pem
+    Admin:
+      ListenAddress: 0.0.0.0:9443
+      TLS:
+        Enabled: true
+        Certificate: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}/tls/server.crt
+        PrivateKey: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}/tls/server.key
+        ClientAuthRequired: true
+        ClientRootCAs:
+          - /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/tlscacerts/tls-fabric-ca-7055-fabric-ca.pem
+        RootCAs:
+        - /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/admin/tls/tlscacerts/tls-fabric-ca-7055-fabric-ca.pem
+
+    ChannelParticipation:
+      Enabled: true
+      MaxRequestBodySize: 1 MB
+    FileLedger:
+      Location: /etc/hyperledger/production
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orderer{{ORDERER_ID}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orderer{{ORDERER_ID}}
+  template:
+    metadata:
+      labels:
+        app: orderer{{ORDERER_ID}}
+    spec:
+      containers:
+      - name: orderer
+        image: hyperledger/fabric-orderer:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            export ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+            export ORDERER_GENERAL_LISTENPORT=7050
+            export ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+            export ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer{{ORDERER_ID}}/msp
+            export ORDERER_GENERAL_GENESISPROFILE=MultiOrgOrdererGenesis
+            export ORDERER_GENERAL_BOOTSTRAPFILE=/etc/hyperledger/fabric/config/genesis.block
+
+            orderer
+        env:
+        - name: FABRIC_LOGGING_SPEC
+          value: "DEBUG"
+        - name: ORDERER_GENERAL_TLS_ENABLED
+          value: "true"
+        - name: FABRIC_CFG_PATH
+          value: "/etc/hyperledger/fabric"
+        - name: ORDERER_GENERAL_GENESISFILE
+          value: /etc/hyperledger/fabric/config/genesis.block
+        ports:
+        - containerPort: 7050
+        - containerPort: 9443
+        volumeMounts:
+        - name: crypto-material
+          mountPath: /etc/hyperledger/fabric/
+        - name: orderer-config
+          mountPath: /etc/hyperledger/fabric/orderer.yaml
+          subPath: orderer.yaml
+        - name: orderer-data
+          mountPath: /etc/hyperledger/production
+      volumes:
+      - name: crypto-material
+        persistentVolumeClaim:
+          claimName: fabric-pvc
+      - name: orderer-config
+        configMap:
+          name: orderer-config-{{ORDERER_ID}}
+      - name: orderer-data # Empty directory to isolate orderer data
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orderer{{ORDERER_ID}}
+spec:
+  selector:
+    app: orderer{{ORDERER_ID}}
+  ports:
+    - protocol: TCP
+      port: 7050
+      targetPort: 7050
+      name: grpc
+    - protocol: TCP
+      port: 9443
+      targetPort: 9443
+      name: grpc-admin

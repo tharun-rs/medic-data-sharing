@@ -1,0 +1,248 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: generate-configtx
+spec:
+  template:
+    spec:
+      containers:
+      - name: configtx-generator
+        image: alpine
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Generating configtx.yaml dynamically..."
+            mkdir -p /mnt/fabric-config
+            CONFIGTX_FILE="/mnt/fabric-config/configtx.yaml"
+
+            echo "---" > $CONFIGTX_FILE
+            
+            # ========== CAPABILITIES (must come first) ========== #
+            echo "Capabilities:" >> $CONFIGTX_FILE
+            echo "  Channel: &ChannelCapabilities" >> $CONFIGTX_FILE
+            echo "    V2_0: true" >> $CONFIGTX_FILE
+            echo "  Orderer: &OrdererCapabilities" >> $CONFIGTX_FILE
+            echo "    V2_0: true" >> $CONFIGTX_FILE
+            echo "  Application: &ApplicationCapabilities" >> $CONFIGTX_FILE
+            echo "    V2_0: true" >> $CONFIGTX_FILE
+
+            # ========== DEFAULTS ========== #
+            echo "Channel: &ChannelDefaults" >> $CONFIGTX_FILE
+            echo "  Policies:" >> $CONFIGTX_FILE
+            echo "    Readers:" >> $CONFIGTX_FILE
+            echo "      Type: ImplicitMeta" >> $CONFIGTX_FILE
+            echo "      Rule: \"ANY Readers\"" >> $CONFIGTX_FILE
+            echo "    Writers:" >> $CONFIGTX_FILE
+            echo "      Type: ImplicitMeta" >> $CONFIGTX_FILE
+            echo "      Rule: \"ANY Writers\"" >> $CONFIGTX_FILE
+            echo "    Admins:" >> $CONFIGTX_FILE
+            echo "      Type: ImplicitMeta" >> $CONFIGTX_FILE
+            echo "      Rule: \"MAJORITY Admins\"" >> $CONFIGTX_FILE
+            echo "  Capabilities:" >> $CONFIGTX_FILE
+            echo "    <<: *ChannelCapabilities" >> $CONFIGTX_FILE
+
+            echo "Orderer: &OrdererDefaults" >> $CONFIGTX_FILE
+            echo "  OrdererType: etcdraft" >> $CONFIGTX_FILE
+            echo "  Addresses:" >> $CONFIGTX_FILE
+            for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
+                ORDERER_ID=$(echo "$ORG_ID" | sed 's/org//')
+                echo "    - orderer${ORDERER_ID}:7050" >> $CONFIGTX_FILE
+            done
+            echo "  BatchTimeout: 2s" >> $CONFIGTX_FILE
+            echo "  BatchSize:" >> $CONFIGTX_FILE
+            echo "    MaxMessageCount: 10" >> $CONFIGTX_FILE
+            echo "    AbsoluteMaxBytes: 99 MB" >> $CONFIGTX_FILE
+            echo "    PreferredMaxBytes: 512 KB" >> $CONFIGTX_FILE
+            echo "  Policies:" >> $CONFIGTX_FILE
+            echo "    Readers:" >> $CONFIGTX_FILE
+            echo "      Type: ImplicitMeta" >> $CONFIGTX_FILE
+            echo "      Rule: \"ANY Readers\"" >> $CONFIGTX_FILE
+            echo "    Writers:" >> $CONFIGTX_FILE
+            echo "      Type: ImplicitMeta" >> $CONFIGTX_FILE
+            echo "      Rule: \"ANY Writers\"" >> $CONFIGTX_FILE
+            echo "    Admins:" >> $CONFIGTX_FILE
+            echo "      Type: ImplicitMeta" >> $CONFIGTX_FILE
+            echo "      Rule: \"MAJORITY Admins\"" >> $CONFIGTX_FILE
+            echo "    BlockValidation:" >> $CONFIGTX_FILE
+            echo "      Type: ImplicitMeta" >> $CONFIGTX_FILE
+            echo "      Rule: \"ANY Writers\"" >> $CONFIGTX_FILE
+            echo "  Capabilities:" >> $CONFIGTX_FILE
+            echo "    <<: *OrdererCapabilities" >> $CONFIGTX_FILE
+            echo "  EtcdRaft:" >> $CONFIGTX_FILE
+            echo "    Consenters:" >> $CONFIGTX_FILE
+            for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
+                ORDERER_NUM=$(echo "${ORG_ID}" | sed 's/org//')  # Extracts 1, 2, or 3 from org1, org2, org3
+                echo "      - Host: orderer${ORDERER_NUM}" >> $CONFIGTX_FILE
+                echo "        Port: 7050" >> $CONFIGTX_FILE
+                echo "        ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer${ORDERER_NUM}/tls/server.crt" >> $CONFIGTX_FILE
+                echo "        ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer${ORDERER_NUM}/tls/server.crt" >> $CONFIGTX_FILE
+            done
+            echo "  Organizations:" >> $CONFIGTX_FILE
+            echo "  - &OrdererOrg" >> $CONFIGTX_FILE
+            echo "    Name: OrdererMSP" >> $CONFIGTX_FILE
+            echo "    ID: OrdererMSP" >> $CONFIGTX_FILE
+            echo "    MSPDir: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/msp" >> $CONFIGTX_FILE
+            echo "    Policies:" >> $CONFIGTX_FILE
+            echo "      Readers:" >> $CONFIGTX_FILE
+            echo "        Type: Signature" >> $CONFIGTX_FILE
+            echo "        Rule: \"OR('OrdererMSP.member')\"" >> $CONFIGTX_FILE
+            echo "      Writers:" >> $CONFIGTX_FILE
+            echo "        Type: Signature" >> $CONFIGTX_FILE
+            echo "        Rule: \"OR('OrdererMSP.member')\"" >> $CONFIGTX_FILE
+            echo "      Admins:" >> $CONFIGTX_FILE
+            echo "        Type: Signature" >> $CONFIGTX_FILE
+            echo "        Rule: \"OR('OrdererMSP.admin')\"" >> $CONFIGTX_FILE
+            echo "    OrdererEndpoints:" >> $CONFIGTX_FILE
+            for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
+                ORDERER_NUM=$(echo "${ORG_ID}" | sed 's/org//')
+                echo "      - orderer${ORDERER_NUM}:7050" >> $CONFIGTX_FILE
+            done
+
+            echo "Application: &ApplicationDefaults" >> $CONFIGTX_FILE
+            echo "  Policies:" >> $CONFIGTX_FILE
+            echo "    Readers:" >> $CONFIGTX_FILE
+            echo "      Type: ImplicitMeta" >> $CONFIGTX_FILE
+            echo "      Rule: \"ANY Readers\"" >> $CONFIGTX_FILE
+            echo "    Writers:" >> $CONFIGTX_FILE
+            echo "      Type: ImplicitMeta" >> $CONFIGTX_FILE
+            echo "      Rule: \"ANY Writers\"" >> $CONFIGTX_FILE
+            echo "    Admins:" >> $CONFIGTX_FILE
+            echo "      Type: ImplicitMeta" >> $CONFIGTX_FILE
+            echo "      Rule: \"MAJORITY Admins\"" >> $CONFIGTX_FILE
+            echo "    LifecycleEndorsement:" >> $CONFIGTX_FILE
+            echo "      Type: ImplicitMeta" >> $CONFIGTX_FILE
+            echo "      Rule: \"MAJORITY Endorsement\"" >> $CONFIGTX_FILE
+            echo "    Endorsement:" >> $CONFIGTX_FILE
+            echo "      Type: ImplicitMeta" >> $CONFIGTX_FILE
+            echo "      Rule: \"MAJORITY Endorsement\"" >> $CONFIGTX_FILE
+            echo "  Capabilities:" >> $CONFIGTX_FILE
+            echo "    <<: *ApplicationCapabilities" >> $CONFIGTX_FILE
+
+            # ========== ORGANIZATIONS ========== #
+            echo "Organizations:" >> $CONFIGTX_FILE
+
+            ORG_MEMBERS=""
+            ORG_ADMINS=""
+
+            # Peer Organizations
+            for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
+                ORG_NAME=$(echo "$ORG_ID")
+
+                echo "  - &${ORG_NAME}MSP" >> $CONFIGTX_FILE
+                echo "    Name: ${ORG_NAME}MSP" >> $CONFIGTX_FILE
+                echo "    ID: ${ORG_NAME}MSP" >> $CONFIGTX_FILE
+                echo "    MSPDir: /etc/hyperledger/fabric/crypto-config/peerOrganizations/${ORG_ID}/msp" >> $CONFIGTX_FILE
+                echo "    AnchorPeers:" >> $CONFIGTX_FILE
+                echo "      - Host: peer0${ORG_NAME}" >> $CONFIGTX_FILE
+                echo "        Port: 7051" >> $CONFIGTX_FILE
+                echo "    Policies:" >> $CONFIGTX_FILE
+                echo "      Readers:" >> $CONFIGTX_FILE
+                echo "        Type: Signature" >> $CONFIGTX_FILE
+                echo "        Rule: \"OR('${ORG_NAME}MSP.admin', '${ORG_NAME}MSP.peer', '${ORG_NAME}MSP.client')\"" >> $CONFIGTX_FILE
+                echo "      Writers:" >> $CONFIGTX_FILE
+                echo "        Type: Signature" >> $CONFIGTX_FILE
+                echo "        Rule: \"OR('${ORG_NAME}MSP.admin', '${ORG_NAME}MSP.client')\"" >> $CONFIGTX_FILE
+                echo "      Admins:" >> $CONFIGTX_FILE
+                echo "        Type: Signature" >> $CONFIGTX_FILE
+                echo "        Rule: \"OR('${ORG_NAME}MSP.admin')\"" >> $CONFIGTX_FILE
+                
+                ORG_MEMBERS="${ORG_MEMBERS},'${ORG_NAME}MSP.member'"
+                ORG_ADMINS="${ORG_ADMINS},'${ORG_NAME}MSP.admin'"
+            done
+            
+            # Orderer Organization
+            echo "  - &OrdererOrg" >> $CONFIGTX_FILE
+            echo "    Name: OrdererMSP" >> $CONFIGTX_FILE
+            echo "    ID: OrdererMSP" >> $CONFIGTX_FILE
+            echo "    MSPDir: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/msp" >> $CONFIGTX_FILE
+            echo "    Policies:" >> $CONFIGTX_FILE
+            echo "      Readers:" >> $CONFIGTX_FILE
+            echo "        Type: Signature" >> $CONFIGTX_FILE
+            echo "        Rule: \"OR('OrdererMSP.member')\"" >> $CONFIGTX_FILE
+            echo "      Writers:" >> $CONFIGTX_FILE
+            echo "        Type: Signature" >> $CONFIGTX_FILE
+            echo "        Rule: \"OR('OrdererMSP.member')\"" >> $CONFIGTX_FILE
+            echo "      Admins:" >> $CONFIGTX_FILE
+            echo "        Type: Signature" >> $CONFIGTX_FILE
+            echo "        Rule: \"OR('OrdererMSP.admin')\"" >> $CONFIGTX_FILE
+            echo "    OrdererEndpoints:" >> $CONFIGTX_FILE
+            for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
+                ORDERER_NUM=$(echo "${ORG_ID}" | sed 's/org//')
+                echo "      - orderer${ORDERER_NUM}:7050" >> $CONFIGTX_FILE
+            done
+
+            # ========== ORDERER SECTION ========== #
+
+            #echo "Orderer:" >> $CONFIGTX_FILE
+            #echo "  <<: *OrdererDefaults" >> $CONFIGTX_FILE
+
+
+            # ========== PROFILES ========== #
+            echo "Profiles:" >> $CONFIGTX_FILE
+            echo "  MultiOrgOrdererGenesis:" >> $CONFIGTX_FILE
+            echo "    <<: *ChannelDefaults" >> $CONFIGTX_FILE
+            echo "    Orderer:" >> $CONFIGTX_FILE
+            echo "      <<: *OrdererDefaults" >> $CONFIGTX_FILE
+            echo "      EtcdRaft:" >> $CONFIGTX_FILE
+            echo "        Consenters:" >> $CONFIGTX_FILE
+            for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
+                ORDERER_NUM=$(echo "${ORG_ID}" | sed 's/org//')
+                echo "          - Host: orderer${ORDERER_NUM}" >> $CONFIGTX_FILE
+                echo "            Port: 7050" >> $CONFIGTX_FILE
+                echo "            ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer${ORDERER_NUM}/tls/server.crt" >> $CONFIGTX_FILE
+                echo "            ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer${ORDERER_NUM}/tls/server.crt" >> $CONFIGTX_FILE
+            done
+            echo "      Organizations:" >> $CONFIGTX_FILE
+            echo "        - *OrdererOrg" >> $CONFIGTX_FILE
+            echo "    Consortiums:" >> $CONFIGTX_FILE
+            echo "      SampleConsortium:" >> $CONFIGTX_FILE
+            echo "        Organizations:" >> $CONFIGTX_FILE
+            for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
+                ORG_NAME=$(echo "$ORG_ID")
+                echo "          - *${ORG_NAME}MSP" >> $CONFIGTX_FILE
+            done
+
+            echo "  MultiOrgChannel:" >> $CONFIGTX_FILE
+            echo "    <<: *ChannelDefaults" >> $CONFIGTX_FILE
+            echo "    Orderer:" >> $CONFIGTX_FILE
+            echo "      <<: *OrdererDefaults" >> $CONFIGTX_FILE
+            echo "      EtcdRaft:" >> $CONFIGTX_FILE
+            echo "        Consenters:" >> $CONFIGTX_FILE
+            for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
+                ORDERER_NUM=$(echo "${ORG_ID}" | sed 's/org//')
+                echo "          - Host: orderer${ORDERER_NUM}" >> $CONFIGTX_FILE
+                echo "            Port: 7050" >> $CONFIGTX_FILE
+                echo "            ClientTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer${ORDERER_NUM}/tls/server.crt" >> $CONFIGTX_FILE
+                echo "            ServerTLSCert: /etc/hyperledger/fabric/crypto-config/ordererOrganizations/example.com/orderers/orderer${ORDERER_NUM}/tls/server.crt" >> $CONFIGTX_FILE
+            done
+            echo "      Organizations:" >> $CONFIGTX_FILE
+            echo "        - *OrdererOrg" >> $CONFIGTX_FILE
+            echo "    Consortium: SampleConsortium" >> $CONFIGTX_FILE
+            echo "    Application:" >> $CONFIGTX_FILE
+            echo "      <<: *ApplicationDefaults" >> $CONFIGTX_FILE
+            echo "      Policies:" >> $CONFIGTX_FILE
+            echo "        Readers:" >> $CONFIGTX_FILE
+            echo "          Type: ImplicitMeta" >> $CONFIGTX_FILE
+            echo "          Rule: \"ANY Readers\"" >> $CONFIGTX_FILE
+            echo "        Writers:" >> $CONFIGTX_FILE
+            echo "          Type: ImplicitMeta" >> $CONFIGTX_FILE
+            echo "          Rule: \"ANY Writers\"" >> $CONFIGTX_FILE
+            echo "        Admins:" >> $CONFIGTX_FILE
+            echo "          Type: ImplicitMeta" >> $CONFIGTX_FILE
+            echo "          Rule: \"MAJORITY Admins\"" >> $CONFIGTX_FILE
+            echo "      Organizations:" >> $CONFIGTX_FILE
+            for ORG_ID in $(echo "{{ORG_IDS}}" | tr ',' ' '); do
+                ORG_NAME=$(echo "$ORG_ID")
+                echo "        - *${ORG_NAME}MSP" >> $CONFIGTX_FILE
+            done
+
+            echo "Configtx.yaml created successfully at $CONFIGTX_FILE"
+        volumeMounts:
+          - name: fabric-config
+            mountPath: /mnt/fabric-config
+      restartPolicy: Never
+      volumes:
+      - name: fabric-config
+        persistentVolumeClaim:
+          claimName: fabric-pvc
+  backoffLimit: 3
