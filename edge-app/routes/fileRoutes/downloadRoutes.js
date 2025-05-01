@@ -3,7 +3,7 @@ const path = require("path");
 const fs = require('fs');
 const crypto = require('crypto');
 const { downloadFile, downloadFileWithCID } = require('../../ipfsConn/FileManager');
-// const { queryAuthorizationForPatient } = require('../../peerAdapter/authorizationContracts');
+const { queryAuthorizationForPatient } = require('../../peerAdapter/authorizationContracts');
 const p2pNodeManager = require('../../p2pComm/p2pNodeManager');
 const { getAllPHIByFilters, getAllPHIByPatientID, getAllPIIByPatientID } = require("../../peerAdapter/dataUploadContracts");
 const { createPIIAccessRequestWithFileID, queryPIIAccessRequestsByFileID } = require("../../peerAdapter/piiContracts");
@@ -102,7 +102,7 @@ router.post("/pii", async (req, res) => {
             //raise a access request
             //get node multiaddr
             const nodeMultiAddr = p2pNodeManager.p2pNode.getMultiaddrs();
-            // await createPIIAccessRequestWithFileID(patientId, fileId, dataCustodian, process.env.ORG_NAME, nodeMultiAddr);
+            await createPIIAccessRequestWithFileID(patientId, fileId, dataCustodian, process.env.ORG_NAME, nodeMultiAddr);
 
             const addr = queryResult[0].custodian_address;
             const { cid, aesKey, iv, extension } = await p2pNodeManager.sendRequest(addr, fileId, "pii", process.env.ORG_NAME);
@@ -172,7 +172,7 @@ router.post("/phi", async (req, res) => {
             //raise a access request
             //get node multiaddr
             const nodeMultiAddr = p2pNodeManager.p2pNode.getMultiaddrs();
-            // await createPHIAccessRequestWithFileID(patientId, fileId, dataCustodian, process.env.ORG_NAME, nodeMultiAddr);
+            await createPHIAccessRequestWithFileID(patientId, fileId, dataCustodian, process.env.ORG_NAME, nodeMultiAddr);
 
             const addr = queryResult[0].custodian_address;
             const { cid, aesKey, iv, extension } = await p2pNodeManager.sendRequest(addr, fileId, "phi", process.env.ORG_NAME);
@@ -234,12 +234,18 @@ router.get("/testTimings", async (req, res) => {
         const { cid, aesKey, iv, extension } = await p2pNodeManager.sendRequest(addr, fileId);
         const t_request_end = Date.now();
 
+        const t_request_base_start = Date.now();
+        const { fileid } = await p2pNodeManager.sendRequestBaseMethod(addr, fileId);
+        const t_request_base_end = Date.now();
+
         const T_transaction = t_query_end - t_query_start;         // in ms
         const T_edge = t_request_end - t_request_start;   // in ms
+        const T_edge_base = t_request_base_end - t_request_base_start;
 
         res.json({
             T_transaction,      // Time taken for `queryAuthorizationForPatient`
-            T_edge,    // Time taken for `sendRequest`
+            T_edge,    // Time taken for `sendRequest`\
+            T_edge_base
         });
     } catch (error) {
         console.error("Error getting file:", error);

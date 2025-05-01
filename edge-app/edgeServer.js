@@ -11,8 +11,8 @@ const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors()); // Enable CORS
-app.use(express.json({ limit: "100mb" }));
-app.use(express.urlencoded({ limit: "100mb", extended: true }));
+app.use(express.json({ limit: "200mb" }));
+app.use(express.urlencoded({ limit: "200mb", extended: true }));
 
 app.use("/fileHandler/upload", fileUploadRouter);
 app.use("/fileHandler/download", fileDownloadRouter);

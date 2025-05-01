@@ -1,4 +1,4 @@
-let createLibp2p, tcp, noise, yamux, multiaddr, bootstrap, kadDHT, jsonToStream, streamToJSON;
+let createLibp2p, tcp, noise, yamux, multiaddr, bootstrap, kadDHT, jsonToStream, streamToJSON, drain;
 
 async function loadDependencies() {
   ({ createLibp2p } = await import('libp2p'));
@@ -9,6 +9,7 @@ async function loadDependencies() {
   ({ bootstrap } = await import('@libp2p/bootstrap'));
   ({ kadDHT } = await import('@libp2p/kad-dht'));
   ({ jsonToStream, streamToJSON } = await import('./streams.js'));
+  ({ drain } = await import('it-drain'));
 }
 
 // Call the function to load dependencies
@@ -81,14 +82,34 @@ class P2PNode {
       await this.initialize();
     }
 
+
+
     this.node.handle(protocol, async ({ stream }) => {
-      const jsonData = await streamToJSON(stream);
-      processFunction(jsonData);
-      if (stream && stream.sink && stream.sink.end) {
-        stream.sink.end(); // if using a proper duplex stream
+      try {
+        const jsonData = await streamToJSON(stream);
+        await processFunction(jsonData);
+      } catch (err) {
+        console.error("Error processing stream:", err);
+      } finally {
+        try {
+          // Drain to fully consume and close the stream
+          await pipe(stream.source, drain());
+        } catch (drainErr) {
+          console.error("Error draining stream:", drainErr);
+        }
+
+        // Also try to close stream if supported
+        if (typeof stream.close === 'function') {
+          try {
+            await stream.close();
+          } catch (closeErr) {
+            console.error("Error closing stream:", closeErr);
+          }
+        }
       }
     });
   }
+
 
   /**
    * @returns {Multiaddr} Returns multiaddr as a string

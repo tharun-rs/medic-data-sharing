@@ -17,6 +17,14 @@ elif [ "$1" == "restart" ] && [ "$2" == "frontend" ]; then
     docker-compose -f docker-compose.demo.yml up -d frontend1
     docker-compose -f docker-compose.demo.yml up -d frontend2
 
+elif [ "$1" == "restart" ] && [ "$2" == "ipfs" ]; then
+    docker rm -f ipfs-node1
+    docker rm -f ipfs-node2
+    docker rmi -f medic-data-sharing_ipfs-node1
+    docker rmi -f medic-data-sharing_ipfs-node2
+    docker-compose -f docker-compose.demo.yml up -d ipfs-node1
+    docker-compose -f docker-compose.demo.yml up -d ipfs-node2
+
 elif [ "$1" == "up" ]; then
     cd blockchain/test-network
     # start the network

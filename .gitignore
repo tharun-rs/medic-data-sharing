@@ -5,6 +5,7 @@ ipfs/datastore/
 architecture
 *.env
 performance/perf
+performance/test_files
 bin/*
 builders/*
 config/*

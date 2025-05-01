@@ -14,7 +14,7 @@ fi
 
 # Define organizations
 declare -A ORGS
-ORGS=( ["org1"]="Org1" ["org2"]="Org2" ["org3"]="Org3" )
+ORGS=( ["org1"]="Org1" ["org2"]="Org2" ["org3"]="Org3"  ["org4"]="Org4" ["org5"]="Org5" ["org6"]="Org6" ["org7"]="Org7" ["org8"]="Org8" ["org9"]="Org9" ["org10"]="Org10" )
 
 ORG_IDS=$(echo ${!ORGS[@]} | tr ' ' ',')
 
@@ -26,14 +26,6 @@ loadDockerContainer() {
     kind load docker-image ipfs-app:latest
     docker build -t bootstrap-app:latest ./bootstraps
     kind load docker-image bootstrap-app:latest
-    # docker build -t chaincode/pii:1.0 ./blockchain/chaincode/pii-access-request-contract
-    # kind load docker-image chaincode/pii:1.0
-    # docker build -t chaincode/phi:1.0 ./blockchain/chaincode/phi-access-request-contract
-    # kind load docker-image chaincode/phi:1.0
-    # docker build -t chaincode/data:1.0 ./blockchain/chaincode/data-upload-contract
-    # kind load docker-image chaincode/data:1.0
-    # docker build -t chaincode/auth:1.0 ./blockchain/chaincode/authorization-contract
-    # kind load docker-image chaincode/auth:1.0
 }
 
 createVolume() {
@@ -73,7 +65,7 @@ fabricEnroll() {
 
     done
     echo "Waiting for Fabric CA enrollment jobs to complete..."
-    sleep 10
+    sleep 30
 }
 
 generateConfigTX() {
@@ -99,11 +91,6 @@ deployServiceAndDeployments() {
         ORG_NAME=${ORGS[$ORG_ID]}
         ORDERER_ID=$(echo "$ORG_ID" | sed 's/org//')
 
-        echo "Deploying Edge Node for $ORG_NAME ($ORG_ID)..."
-        sed -e "s/{{ORG_ID}}/$ORG_ID/g" -e "s/{{ORG_NAME}}/$ORG_NAME/g" k8s/edge-app-template.yml > edge-app-$ORG_ID.yaml
-        kubectl apply -f edge-app-$ORG_ID.yaml
-        rm -f edge-app-$ORG_ID.yaml
-
         echo "Deploying IPFS Node for $ORG_NAME ($ORG_ID)..."
         sed -e "s/{{ORG_ID}}/$ORG_ID/g" k8s/ipfs-template.yml > ipfs-node-$ORG_ID.yaml
         kubectl apply -f ipfs-node-$ORG_ID.yaml
@@ -126,7 +113,7 @@ deployServiceAndDeployments() {
     done
     # Wait for peer and orderer deployments to be ready
     echo "Waiting for all deployments to be ready..."
-    sleep 10  # Adjust time as needed
+    sleep 30  # Adjust time as needed
 }
 
 createChannel() {
@@ -155,7 +142,7 @@ peersJoinChannel() {
     done
     # Wait for peers to join the channel
     echo "Waiting for all peers to join the channel..."
-    sleep 10
+    sleep 30
 }
 
 packageChaincode() {

@@ -52,6 +52,7 @@ services:
       - ORDERER_ADDRESS=orderer.example.com:7050
       - BOOTSTRAP_NODE_IP=bootstrap
       - PEER_PORT_NUMBER=7051
+      - INCLUDE_BASE_METHOD_UPLOAD=true # Set to false if not performance testing env
     depends_on:
       - bootstrap
       - mongodb1
@@ -80,6 +81,7 @@ services:
       - ORDERER_ADDRESS=orderer.example.com:7050
       - BOOTSTRAP_NODE_IP=bootstrap
       - PEER_PORT_NUMBER=9051
+      - INCLUDE_BASE_METHOD_UPLOAD=true # Set to false if not performance testing env
     depends_on:
       - bootstrap
       - mongodb2

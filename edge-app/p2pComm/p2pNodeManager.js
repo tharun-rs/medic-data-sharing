@@ -5,6 +5,8 @@ const { getAllPIIByPatientID } = require('../peerAdapter/dataUploadContracts');
 const { queryPIIAccessRequestsByFileID } = require('../peerAdapter/piiContracts');
 const { error } = require('console');
 const { queryPHIAccessRequestsByFileId } = require('../peerAdapter/phiContracts');
+const fs = require('fs').promises;
+const path = require('path');
 
 class P2PNodeManager {
   constructor() {
@@ -40,6 +42,60 @@ class P2PNodeManager {
 
   async sendResponse(jsonData) {
     const type = jsonData.type;
+    const method = jsonData.method;
+    if (method === "base") {
+      const backupDir = "./backup"
+      if (type === "request") {
+        const { fileId } = jsonData;
+        const filePath = path.join(backupDir, `${fileId}.txt`);
+
+        try {
+          const fileBuffer = await fs.readFile(filePath);
+          const base64File = fileBuffer.toString('base64');
+
+          this.p2pNode.sendToNode(jsonData.address, {
+            type: "response",
+            method: "base",
+            fileId,
+            file: base64File,
+          });
+        } catch (err) {
+          console.error(`Error reading or sending file ${fileId}:`, err);
+          this.p2pNode.sendToNode(jsonData.address, {
+            type: "response",
+            method: "base",
+            fileId,
+            error: "File not found or could not be read",
+          });
+        }
+      }
+
+      if (type === "response") {
+        const { fileId, file, error } = jsonData;
+        if (error) {
+          console.error(`Received error for fileId ${fileId}:`, error);
+          return;
+        }
+
+        const fileBuffer = Buffer.from(file, 'base64');
+        const filePath = path.join(backupDir, `${fileId}.txt`);
+
+        try {
+          await fs.mkdir(backupDir, { recursive: true });
+          await fs.writeFile(filePath, fileBuffer);
+          console.log(`File ${fileId}.txt written successfully.`);
+        } catch (err) {
+          console.error(`Error writing file ${fileId}.txt:`, err);
+        }
+
+        if (this.pendingRequests.has(jsonData.fileId+"base")) {
+          this.pendingRequests.get(jsonData.fileId+"base").resolve({
+            fileid: fileId
+          });
+          this.pendingRequests.delete(jsonData.fileId+"base");
+        }
+      }
+    }
 
     if (type === "request") {
       const { fileId, rsa_key: requesterPublicKey, fileType, requestor } = jsonData;
@@ -49,7 +105,7 @@ class P2PNodeManager {
         if (fileType === "pii") {
           const response = await queryPIIAccessRequestsByFileID(fileId);
           const matchedRecord = response.find(record => record.requestor === requestor);
-          if(matchedRecord){
+          if (matchedRecord) {
             requestor_address = matchedRecord.requestor_address;
           } else {
             throw Error("Access not available");
@@ -58,7 +114,7 @@ class P2PNodeManager {
         else if (fileType === "phi") {
           const response = await queryPHIAccessRequestsByFileId(fileId);
           const matchedRecord = response.find(record => record.requestor === requestor);
-          if(matchedRecord){
+          if (matchedRecord) {
             requestor_address = matchedRecord.requestor_address;
           } else {
             throw Error("Access not available");
@@ -158,6 +214,24 @@ class P2PNodeManager {
       fileType,
       requestor,
       type: "request",
+    });
+
+    return requestPromise;
+  }
+
+  async sendRequestBaseMethod(receiverAddr, fileId, fileType = "auth", requestor = "") {
+    const requestPromise = new Promise((resolve, reject) => {
+      this.pendingRequests.set(fileId+"base", { resolve, reject });
+    });
+
+    this.p2pNode.sendToNode(receiverAddr, {
+      fileId: fileId,
+      address: this.p2pNode.getMultiaddrs(),
+      rsa_key: this.rsaPublicKey,
+      fileType,
+      requestor,
+      type: "request",
+      method: "base",
     });
 
     return requestPromise;

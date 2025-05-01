@@ -40,7 +40,7 @@ async function streamToJSON(stream) {
         // Read from the stream source
         stream.source,
         // Decode length-prefixed data
-        (source) => lp.decode(source),
+        (source) => lp.decode(source, { maxDataLength: 1000 * 1024 * 1024 }),
         // Turn buffers into strings
         (source) => map(source, (buf) => uint8ArrayToString(buf.subarray())),
         async function (source) {

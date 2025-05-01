@@ -7,7 +7,7 @@ import csv
 
 # Configuration
 IPFS_SERVER = "http://localhost:3002"
-FILE_SIZES_KB = [size for size in range(500, 55000, 500)]  # Sizes in KB
+FILE_SIZES_KB = [size for size in range(500, 100500, 500)]  # Sizes in KB
 TEST_DIR = "test_files"
 OUTPUT_DIR = "outputs"
 

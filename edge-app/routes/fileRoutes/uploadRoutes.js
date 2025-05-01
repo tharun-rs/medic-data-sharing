@@ -2,13 +2,14 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const { uploadFile } = require('../../ipfsConn/FileManager');
-// const { uploadAuthorization } = require('../../peerAdapter/authorizationContracts');
-const { uploadAuthorization } = require('../../peerAdapter/mockContracts');
+const { uploadAuthorization } = require('../../peerAdapter/authorizationContracts');
+// const { uploadAuthorization } = require('../../peerAdapter/mockContracts');
 const p2pNodeManager = require('../../p2pComm/p2pNodeManager');
 const crypto = require('crypto');
 const fs = require('fs');
-// const { uploadPIIRecord, uploadPHIRecord } = require("../../peerAdapter/dataUploadContracts");
-const { uploadPIIRecord, uploadPHIRecord } = require("../../peerAdapter/mockContracts");
+const fsp = require('fs/promises');
+const { uploadPIIRecord, uploadPHIRecord } = require("../../peerAdapter/dataUploadContracts");
+// const { uploadPIIRecord, uploadPHIRecord } = require("../../peerAdapter/mockContracts");
 
 async function getFileHash(filePath, algorithm = 'sha256') {
     return new Promise((resolve, reject) => {
@@ -29,7 +30,7 @@ const storage = multer.diskStorage({
         const ext = path.extname(file.originalname);
         cb(null, `${file.fieldname}-${Date.now()}${ext}`);
     },
-    limits: { fileSize: 100 * 1024 * 1024 },
+    limits: { fileSize: 200 * 1024 * 1024 },
 });
 
 const upload = multer({ storage });
@@ -48,11 +49,25 @@ router.post("/authorization", upload.single("file"), async (req, res) => {
         }
         const filePath = req.file.path;
 
+        let backupDir, tempCopyPath;
         //get file hash
         const fileHash = await getFileHash(filePath);
 
+        if (process.env.INCLUDE_BASE_METHOD_UPLOAD) {
+            backupDir = './backup'
+            await fsp.mkdir(backupDir, { recursive: true });
+            const fileName = path.basename(filePath);
+            tempCopyPath = path.join(backupDir, fileName);
+            await fsp.copyFile(filePath, tempCopyPath);
+        }
+
         //upload file to ipfs
         const fileId = await uploadFile(filePath);
+
+        if (process.env.INCLUDE_BASE_METHOD_UPLOAD) {
+            const finalPath = path.join(backupDir, `${fileId}.txt`);
+            await fsp.rename(tempCopyPath, finalPath);
+        }
 
         //get node multiaddr
         const nodeMultiAddr = p2pNodeManager.p2pNode.getMultiaddrs();
